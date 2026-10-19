@@ -1,4 +1,5 @@
-import { SiteHeader, SiteFooter } from "@/components/SiteChrome";
+import Navbar from "@/components/Navbar";
+import { SiteFooter } from "@/components/SiteChrome";
 import AccessRequestForm from "@/components/AccessRequestForm";
 import { LEAD_TYPES } from "@/lib/leadTypes";
 
@@ -79,7 +80,7 @@ function SampleLead() {
 export default function Home() {
   return (
     <>
-      <SiteHeader />
+      <Navbar />
       <main>
         <section className="bg-brand">
           <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-12 px-5 py-14 lg:grid-cols-[1fr_400px] lg:gap-16 lg:px-12 lg:py-24">
@@ -105,7 +106,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="leads" className="scroll-mt-16">
+        <section id="leads" className="scroll-mt-16 lg:scroll-mt-[87px]">
           <div className="mx-auto max-w-6xl px-5 py-16 lg:px-12 lg:py-20">
             <Eyebrow>Nos leads</Eyebrow>
             <h2 className="heading mt-3 text-[30px] leading-[1.1] sm:text-[38px]">
@@ -125,7 +126,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="qualite" className="scroll-mt-16 bg-light">
+        <section id="qualite" className="scroll-mt-16 lg:scroll-mt-[87px] bg-light">
           <div className="mx-auto max-w-6xl px-5 py-16 lg:px-12 lg:py-20">
             <Eyebrow>Qualité</Eyebrow>
             <h2 className="heading mt-3 max-w-2xl text-[30px] leading-[1.1] sm:text-[38px]">
@@ -143,7 +144,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="fonctionnement" className="scroll-mt-16">
+        <section id="fonctionnement" className="scroll-mt-16 lg:scroll-mt-[87px]">
           <div className="mx-auto max-w-6xl px-5 py-16 lg:px-12 lg:py-20">
             <Eyebrow>Fonctionnement</Eyebrow>
             <h2 className="heading mt-3 text-[30px] leading-[1.1] sm:text-[38px]">
@@ -161,7 +162,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="faq" className="scroll-mt-16 bg-light">
+        <section id="faq" className="scroll-mt-16 lg:scroll-mt-[87px] bg-light">
           <div className="mx-auto max-w-3xl px-5 py-16 lg:py-20">
             <Eyebrow>FAQ</Eyebrow>
             <h2 className="heading mt-3 text-[30px] leading-[1.1] sm:text-[38px]">Questions fréquentes</h2>
@@ -179,7 +180,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="acces" className="scroll-mt-16">
+        <section id="acces" className="scroll-mt-16 lg:scroll-mt-[87px]">
           <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 px-5 py-16 lg:grid-cols-[1fr_1.4fr] lg:gap-16 lg:px-12 lg:py-20">
             <div>
               <Eyebrow>Demande d&apos;accès</Eyebrow>
