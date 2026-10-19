@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { CONTACT } from "@/lib/contact";
 
@@ -8,7 +9,8 @@ import { CONTACT } from "@/lib/contact";
 // logo cell spanning a thin utility row and the main row, which ends in a
 // full-height colour block; on mobile the logo, that same block and a
 // hamburger opening a side drawer. Adapted to FicheAssur: broker-facing
-// links, and "Demander un accès" in place of NWC's "Devis gratuit".
+// links, "Devenir partenaire" in place of NWC's "Devis gratuit", and
+// "Espace pro" (the login, to /connexion) in place of "Espace client".
 
 const MAIN_LINKS = [
   { href: "/#leads", label: "Nos leads" },
@@ -32,11 +34,22 @@ function UtilityIcon({ name }: { name: "eye" | "mail" | "phone" }) {
   return <svg {...common}><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2Z" /></svg>;
 }
 
-function Logo({ size = "text-[24px]" }: { size?: string }) {
+// The FicheAssur logo (marketing assets/fiche_assurance_logo.svg, copied to
+// public/brand/). An SVG, so served as is rather than through the image
+// optimizer; sized by height, the width follows its 4.37:1 shape.
+function Logo({ className = "h-10" }: { className?: string }) {
   return (
-    <span className={`heading ${size} text-ink`}>
-      Fiche<span className="text-brand">Assur</span>
-    </span>
+    <Image src="/brand/ficheassur-logo.svg" alt="FicheAssur" width={175} height={40} priority unoptimized className={`${className} w-auto`} />
+  );
+}
+
+// Padlock, as on NWC's "Espace client" button (lucide Lock).
+function LockIcon({ className = "size-4" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={`${className} shrink-0`} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="11" width="18" height="11" rx="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </svg>
   );
 }
 
@@ -97,7 +110,10 @@ export default function Navbar() {
                 ))}
               </nav>
               <Link href="/#acces" className="flex items-center bg-accent px-7 text-[15px] font-bold text-white transition-colors hover:bg-accent-hover">
-                Demander un accès
+                Devenir partenaire
+              </Link>
+              <Link href="/connexion" className="flex items-center gap-2 bg-brand px-7 text-[15px] font-bold text-white transition-colors hover:bg-brand-hover">
+                <LockIcon /> Espace pro
               </Link>
             </div>
           </div>
@@ -106,11 +122,19 @@ export default function Navbar() {
         {/* Mobile */}
         <div className="flex h-16 items-stretch lg:hidden">
           <Link href="/" className="flex shrink-0 items-center border-r border-slate-200 px-4">
-            <Logo size="text-[21px]" />
+            <Logo className="h-8" />
           </Link>
           <div className="flex-1" />
           <Link href="/#acces" className="flex items-center bg-accent px-4 text-[14px] font-bold text-white transition-colors hover:bg-accent-hover sm:px-6">
-            Accès<span className="hidden sm:inline">&nbsp;courtier</span>
+            Partenaire
+          </Link>
+          <Link
+            href="/connexion"
+            aria-label="Espace pro"
+            className="flex items-center gap-2 bg-brand px-4 text-[14px] font-bold text-white transition-colors hover:bg-brand-hover sm:px-5"
+          >
+            <LockIcon className="size-[17px]" />
+            <span className="hidden sm:inline">Espace pro</span>
           </Link>
           <button
             type="button"
@@ -140,7 +164,7 @@ export default function Navbar() {
       >
         <div className="flex h-16 items-stretch border-b border-slate-200">
           <Link href="/" onClick={() => setOpen(false)} className="flex items-center border-r border-slate-200 px-4">
-            <Logo size="text-[21px]" />
+            <Logo className="h-8" />
           </Link>
           <div className="flex-1" />
           <button type="button" onClick={() => setOpen(false)} aria-label="Fermer le menu" className="flex w-14 items-center justify-center hover:bg-slate-50">
@@ -183,13 +207,22 @@ export default function Navbar() {
           </div>
         </nav>
 
-        <Link
-          href="/#acces"
-          onClick={() => setOpen(false)}
-          className="flex items-center justify-center bg-accent py-4 text-[15px] font-bold text-white transition-colors hover:bg-accent-hover"
-        >
-          Demander un accès
-        </Link>
+        <div className="grid grid-cols-2">
+          <Link
+            href="/#acces"
+            onClick={() => setOpen(false)}
+            className="flex items-center justify-center bg-accent py-4 text-[15px] font-bold text-white transition-colors hover:bg-accent-hover"
+          >
+            Devenir partenaire
+          </Link>
+          <Link
+            href="/connexion"
+            onClick={() => setOpen(false)}
+            className="flex items-center justify-center gap-2 bg-brand py-4 text-[15px] font-bold text-white transition-colors hover:bg-brand-hover"
+          >
+            <LockIcon /> Espace pro
+          </Link>
+        </div>
       </aside>
     </>
   );

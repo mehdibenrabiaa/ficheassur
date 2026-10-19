@@ -6,20 +6,53 @@ import { LEAD_TYPES } from "@/lib/leadTypes";
 // Every one of these is something the lead pipeline actually enforces
 // (see the backend's app/schemas/lead.py and app/api/v1/leads.py) — keep
 // this list honest if that changes.
-const QUALITY = [
-  { title: "Consentement RGPD explicite", body: "Chaque prospect a coché lui-même son accord pour être recontacté par un nombre limité de courtiers." },
-  { title: "Téléphone vérifié", body: "Numéro contrôlé et normalisé au format international : pas de numéros fantaisistes." },
-  { title: "Emails jetables refusés", body: "Les adresses temporaires (yopmail, mailinator…) sont bloquées dès la saisie." },
-  { title: "Doublons écartés", body: "Un même email ou téléphone envoyé deux fois en 24 h ne génère qu'un seul lead." },
-  { title: "Anti-fraude", body: "Limitation des envois par adresse IP pour écarter les robots et les envois en masse." },
-  { title: "Fiche détaillée", body: "Besoin, localisation et réponses de qualification : vous savez qui appeler et pourquoi." },
+type QualityIconName = "shield" | "phone" | "mail" | "copy" | "bot" | "file";
+
+// One outline icon per quality check (lucide style, as in the navbar).
+function QualityIcon({ name, className }: { name: QualityIconName; className?: string }) {
+  const p = { viewBox: "0 0 24 24", className, fill: "none", stroke: "currentColor", strokeWidth: 1.75, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": true };
+  switch (name) {
+    case "shield": return <svg {...p}><path d="M20 13c0 5-3.5 7.5-7.7 9a1 1 0 0 1-.7 0C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.2-2.7a1.2 1.2 0 0 1 1.6 0C14.5 3.8 17 5 19 5a1 1 0 0 1 1 1Z" /><path d="m9 12 2 2 4-4" /></svg>;
+    case "phone": return <svg {...p}><path d="M22 16.9v3a2 2 0 0 1-2.2 2A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2Z" /></svg>;
+    case "mail": return <svg {...p}><path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h9" /><path d="m22 7-10 5.5L2 7M17 17l4 4M21 17l-4 4" /></svg>;
+    case "copy": return <svg {...p}><rect x="8" y="8" width="13" height="13" rx="1.5" /><path d="M4 16a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2" /></svg>;
+    case "bot": return <svg {...p}><rect x="3" y="11" width="18" height="10" rx="2" /><path d="M12 7v4M12 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4ZM8 16h.01M16 16h.01" /></svg>;
+    default: return <svg {...p}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" /><path d="M14 2v6h6M8 13h8M8 17h5" /></svg>;
+  }
+}
+
+const QUALITY: { icon: QualityIconName; title: string; body: string }[] = [
+  { icon: "shield", title: "Consentement RGPD explicite", body: "Chaque prospect a coché lui-même son accord pour être recontacté par un nombre limité de courtiers." },
+  { icon: "phone", title: "Téléphone vérifié", body: "Numéro contrôlé et normalisé au format international : pas de numéros fantaisistes." },
+  { icon: "mail", title: "Emails jetables refusés", body: "Les adresses temporaires (yopmail, mailinator…) sont bloquées dès la saisie." },
+  { icon: "copy", title: "Doublons écartés", body: "Un même email ou téléphone envoyé deux fois en 24 h ne génère qu'un seul lead." },
+  { icon: "bot", title: "Anti-fraude", body: "Limitation des envois par adresse IP pour écarter les robots et les envois en masse." },
+  { icon: "file", title: "Fiche détaillée", body: "Besoin, localisation et réponses de qualification : vous savez qui appeler et pourquoi." },
 ];
 
+// Same cards as New World Courtage's "Nous rendons le processus simple"
+// (its OurProcess / InfoCardsSection style2 with step numbers). Photos in
+// public/steps/, from NWC's library for now.
 const STEPS = [
-  { title: "Définissez vos critères", body: "Types d'assurance, départements ciblés et volume souhaité." },
-  { title: "Recevez les leads", body: "Les fiches correspondant à vos critères vous sont transmises au fil de l'eau." },
-  { title: "Rappelez vite, signez plus", body: "Un prospect qui vient de faire sa demande est un prospect qui attend votre appel." },
-];
+  {
+    image: "/steps/choix.webp",
+    imageAlt: "Une courtière choisit ses leads sur son ordinateur",
+    title: "Choisissez vos leads",
+    body: "Le marché (auto, moto, pro de l'automobile, véhicules pro), la zone et la quantité, sans abonnement. Optez pour l'exclusivité : le lead n'est vendu qu'à vous.",
+  },
+  {
+    image: "/steps/paiement.webp",
+    imageAlt: "Un couple règle un achat depuis un téléphone",
+    title: "Payez au lead",
+    body: "Un prix par lead, rien d'autre : vous ne payez que les fiches que vous recevez.",
+  },
+  {
+    image: "/steps/appel.webp",
+    imageAlt: "Une courtière rappelle un prospect au téléphone",
+    title: "Appelez et signez",
+    body: "Le prospect vient de demander un devis et attend votre appel : rappelez-le et signez comme vous le faites d'habitude.",
+  },
+]
 
 const FAQ = [
   { q: "Qui peut acheter des leads ?", a: "Uniquement les courtiers et intermédiaires en assurance immatriculés à l'ORIAS. Chaque demande d'accès est vérifiée avant ouverture du compte." },
@@ -40,41 +73,23 @@ function Eyebrow({ children, light }: { children: React.ReactNode; light?: boole
   return <p className={`text-[12px] font-bold uppercase tracking-[0.16em] ${light ? "text-white/70" : "text-brand"}`}>{children}</p>;
 }
 
-// What a buyer actually receives — an illustration, with the contact
-// details masked as they would be before purchase.
-function SampleLead() {
-  const rows: [string, string][] = [
-    ["Besoin", "Assurance auto"],
-    ["Localisation", "75011 · Paris"],
-    ["Conducteur", "26 – 40 ans"],
-    ["Sinistres (3 ans)", "Aucun"],
-    ["Actuellement assuré", "Oui"],
-    ["Téléphone", "+33 6 •• •• •• 78"],
-  ];
-  return (
-    <div className="bg-white text-ink shadow-[0_8px_30px_rgba(0,0,0,0.25)]">
-      <div className="h-1.5 bg-accent" aria-hidden="true" />
-      <div className="p-6">
-        <div className="flex items-center justify-between">
-          <span className="text-[12px] font-bold uppercase tracking-[0.16em] text-brand">Nouveau lead</span>
-          <span className="flex items-center gap-1.5 text-[12px] font-medium text-[#27ae7a]">
-            <span className="size-2 rounded-full bg-[#27ae7a]" aria-hidden="true" /> il y a 2 min
-          </span>
-        </div>
-        <dl className="mt-5 divide-y divide-slate-100">
-          {rows.map(([k, v]) => (
-            <div key={k} className="flex justify-between gap-4 py-2.5 text-[14px]">
-              <dt className="text-slate-500">{k}</dt>
-              <dd className="font-semibold">{v}</dd>
-            </div>
-          ))}
-        </dl>
-        <div className="mt-4 flex items-center gap-2 bg-light px-3 py-2.5 text-[13px] font-medium">
-          <Check className="text-[#27ae7a]" /> Consentement RGPD recueilli
-        </div>
-      </div>
-    </div>
-  );
+// Card photos, in public/leads/ (taken from New World Courtage's library
+// for now) -- replace a file under the same name to change a photo.
+const LEAD_IMAGES: Record<string, string> = {
+  AUTO: "/leads/auto.webp",
+  MOTO: "/leads/moto.webp",
+  AUTO_PRO: "/leads/pro-auto.webp",
+  COMMERCIAL_AUTO: "/leads/vehicules-pro.webp",
+};
+
+// One outline icon per lead market (same stroke style as the lucide set
+// the navbar uses): car (Auto and Véhicules pro -- taxis and VTC), motorbike, wrench.
+function LeadIcon({ type }: { type: string }) {
+  const p = { viewBox: "0 0 24 24", className: "size-6", fill: "none", stroke: "currentColor", strokeWidth: 1.75, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": true };
+  if (type === "AUTO" || type === "COMMERCIAL_AUTO") return <svg {...p}><path d="M5 17h14M3 13l2-5.5A2 2 0 0 1 6.9 6h10.2a2 2 0 0 1 1.9 1.5L21 13v4h-2" /><path d="M3 13v4h2" /><circle cx="7.5" cy="17" r="1.8" /><circle cx="16.5" cy="17" r="1.8" /><path d="M3 13h18" /></svg>;
+  if (type === "MOTO") return <svg {...p}><circle cx="5.5" cy="16.5" r="3" /><circle cx="18.5" cy="16.5" r="3" /><path d="M5.5 16.5 9 10h5l3 6.5M14 10l2-3h2.5M9 10 7.5 7H5" /></svg>;
+  if (type === "AUTO_PRO") return <svg {...p}><path d="M14.7 6.3a4 4 0 0 0-5.3 5.3L3 18l3 3 6.4-6.4a4 4 0 0 0 5.3-5.3l-2.6 2.6-2.4-.6-.6-2.4 2.6-2.6Z" /></svg>;
+  return <svg {...p}><path d="M2 6h11v10H2zM13 9h4.5l3.5 3.5V16h-8" /><circle cx="6" cy="17.5" r="1.8" /><circle cx="17" cy="17.5" r="1.8" /></svg>;
 }
 
 export default function Home() {
@@ -82,88 +97,185 @@ export default function Home() {
     <>
       <Navbar />
       <main>
-        <section className="bg-brand">
-          <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-12 px-5 py-14 lg:grid-cols-[1fr_400px] lg:gap-16 lg:px-12 lg:py-24">
-            <div className="text-white">
-              <Eyebrow light>Réservé aux courtiers en assurance</Eyebrow>
-              <h1 className="heading mt-4 text-[40px] leading-[1.05] sm:text-[54px] lg:text-[62px]">
-                Des leads assurance <em>prêts à signer.</em>
-              </h1>
-              <p className="mt-5 max-w-lg text-[17px] leading-relaxed text-white/80">
-                Des particuliers et professionnels qui viennent de demander un devis, avec leur consentement, leur besoin
-                et leurs réponses de qualification. Vous n&apos;avez plus qu&apos;à les rappeler.
-              </p>
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <a href="#acces" className="inline-flex h-12 items-center justify-center bg-white px-7 text-[15px] font-bold text-brand transition-colors hover:bg-white/90">
-                  Demander un accès
-                </a>
-                <a href="#leads" className="inline-flex h-12 items-center justify-center border border-white/60 px-7 text-[15px] font-bold text-white transition-colors hover:bg-white/10">
-                  Voir les types de leads
-                </a>
+        {/* Hero, built like New World Courtage's (its PhotoHero): desktop, a
+            full-width photo with a blue gradient behind the text; mobile, the
+            photo on top fading into a blue panel. Photo: public/heroes/
+            home-desktop.webp / home-mobile.webp -- replace both files (same
+            names) with FicheAssur's own when available. */}
+        <section className="relative w-full lg:min-h-[min(640px,calc(100svh-87px))] lg:overflow-hidden">
+          <div className="relative h-[260px] sm:h-[340px] lg:absolute lg:inset-0 lg:h-full">
+            <picture>
+              <source media="(max-width: 1023px)" srcSet="/heroes/home-mobile.webp" />
+              <img
+                src="/heroes/home-desktop.webp"
+                alt="Un bureau de courtage en assurance"
+                fetchPriority="high"
+                decoding="async"
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+            </picture>
+            <div
+              aria-hidden="true"
+              className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-brand to-transparent lg:inset-0 lg:h-auto lg:bg-gradient-to-r lg:from-brand/95 lg:via-brand/70 lg:to-brand/10"
+            />
+          </div>
+
+          <div className="relative bg-brand lg:flex lg:min-h-[min(640px,calc(100svh-87px))] lg:items-center lg:bg-transparent">
+            <div className="w-full px-5 pb-12 pt-4 sm:px-8 lg:px-12 lg:py-16 2xl:px-24">
+              <div className="text-white lg:w-4/5 lg:max-w-3xl">
+                <h1 className="heading mt-4 text-[40px] leading-[1.05] sm:text-[54px] lg:text-[62px]">
+                  Des leads assurance <em className="whitespace-nowrap">prêts à signer.</em>
+                </h1>
+                <p className="mt-5 max-w-lg text-[17px] leading-relaxed text-white/85">
+                  Des particuliers et professionnels qui viennent de demander un devis, avec leur consentement, leur besoin
+                  et leurs réponses de qualification. Vous n&apos;avez plus qu&apos;à les rappeler.
+                </p>
+                <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                  <a href="#acces" className="inline-flex h-12 items-center justify-center gap-1 border-2 border-white px-7 text-[15px] font-bold text-white transition-colors hover:bg-white hover:text-brand">
+                    Devenir partenaire
+                    <svg viewBox="0 0 24 24" className="size-[18px]" fill="none" stroke="currentColor" strokeWidth={2.5} aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+                  </a>
+                  <a href="#leads" className="inline-flex h-12 items-center justify-center bg-accent px-7 text-[15px] font-bold text-white transition-colors hover:bg-accent-hover">
+                    Voir les types de leads
+                  </a>
+                </div>
               </div>
             </div>
-            <SampleLead />
           </div>
         </section>
 
-        <section id="leads" className="scroll-mt-16 lg:scroll-mt-[87px]">
-          <div className="mx-auto max-w-6xl px-5 py-16 lg:px-12 lg:py-20">
+        <section id="leads" className="scroll-mt-16 lg:scroll-mt-[87px] w-full py-4">
+          <div className="px-5 lg:px-12 2xl:px-24">
+          <div className="bg-light px-4 py-10 sm:px-8 lg:px-14 lg:py-14">
+          <div className="mx-auto max-w-6xl">
             <Eyebrow>Nos leads</Eyebrow>
             <h2 className="heading mt-3 text-[30px] leading-[1.1] sm:text-[38px]">
               Quatre marchés, <em>des prospects qualifiés.</em>
             </h2>
             <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {LEAD_TYPES.map((t) => (
-                <div key={t.value} className="bg-light">
+                <div key={t.value} className="flex flex-col bg-white shadow-[0_1px_4px_rgba(0,0,0,0.08)]">
                   <div className="h-1.5 bg-brand" aria-hidden="true" />
-                  <div className="flex flex-col gap-3 p-6">
+                  <div className="relative h-44">
+                    <img src={LEAD_IMAGES[t.value]} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
+                    <span className="absolute bottom-0 left-6 flex size-11 translate-y-1/2 items-center justify-center bg-brand text-white shadow-md">
+                      <LeadIcon type={t.value} />
+                    </span>
+                  </div>
+                  <div className="flex flex-1 flex-col gap-3 p-6 pt-9">
                     <h3 className="heading text-[22px]">{t.label}</h3>
-                    <p className="text-[15px] leading-relaxed text-slate-600">{t.body}</p>
+                    <p className="flex-1 text-[15px] leading-relaxed text-slate-600">{t.body}</p>
+                    {/* Pinned to the card's bottom so the four links line up. */}
+                    <a href={t.href} aria-label={`Voir les leads ${t.label}`} className="group mt-3 inline-flex w-fit items-center gap-1 text-[15px] font-bold text-brand">
+                      <span className="group-hover:underline">Voir les leads</span>
+                      <svg viewBox="0 0 24 24" className="size-[18px] shrink-0 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" strokeWidth={2.5} aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+                    </a>
                   </div>
                 </div>
               ))}
             </div>
           </div>
+          </div>
+          </div>
         </section>
 
-        <section id="qualite" className="scroll-mt-16 lg:scroll-mt-[87px] bg-light">
-          <div className="mx-auto max-w-6xl px-5 py-16 lg:px-12 lg:py-20">
+        {/* Qualité, as a "bento": a photo (public/sections/qualite-desktop.webp, 780 x 980, and qualite-mobile.webp, 780 x 640) and
+            the six checks as tiles, the first one in brand blue. */}
+        <section id="qualite" className="scroll-mt-16 lg:scroll-mt-[87px] bg-white w-full py-4">
+          <div className="px-5 lg:px-12 2xl:px-24">
+          <div className="bg-light px-4 py-10 sm:px-8 lg:px-14 lg:py-14">
+          <div className="mx-auto max-w-6xl">
             <Eyebrow>Qualité</Eyebrow>
             <h2 className="heading mt-3 max-w-2xl text-[30px] leading-[1.1] sm:text-[38px]">
               Chaque fiche est contrôlée <em>avant de vous parvenir.</em>
             </h2>
-            <div className="mt-10 grid grid-cols-1 gap-px bg-slate-200 sm:grid-cols-2 lg:grid-cols-3">
-              {QUALITY.map((q) => (
-                <div key={q.title} className="flex flex-col gap-3 bg-white p-6">
-                  <Check className="text-brand" />
+            <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-4 md:grid-rows-[repeat(3,minmax(150px,auto))]">
+              <div className="relative min-h-[320px] overflow-hidden md:col-span-2 md:row-span-3 md:min-h-0">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <picture>
+                  {/* Phones/tablets (stacked layout): a near-square crop; desktop: the tall tile. */}
+                  <source media="(max-width: 767px)" srcSet="/sections/qualite-mobile.webp" />
+                  <img src="/sections/qualite-desktop.webp" alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
+                </picture>
+              </div>
+              {QUALITY.map((q, i) => (
+                <div key={q.title} className={`flex flex-col gap-3 p-6 ${i === 0 ? "bg-brand text-white" : "bg-white text-ink"}`}>
+                  <QualityIcon name={q.icon} className={`size-7 ${i === 0 ? "text-white" : "text-brand"}`} />
                   <h3 className="text-[16px] font-semibold">{q.title}</h3>
-                  <p className="text-[15px] leading-relaxed text-slate-600">{q.body}</p>
+                  <p className={`text-[14px] leading-relaxed ${i === 0 ? "text-white/80" : "text-slate-600"}`}>{q.body}</p>
                 </div>
               ))}
             </div>
           </div>
-        </section>
-
-        <section id="fonctionnement" className="scroll-mt-16 lg:scroll-mt-[87px]">
-          <div className="mx-auto max-w-6xl px-5 py-16 lg:px-12 lg:py-20">
-            <Eyebrow>Fonctionnement</Eyebrow>
-            <h2 className="heading mt-3 text-[30px] leading-[1.1] sm:text-[38px]">
-              Trois étapes, <em>sans engagement.</em>
-            </h2>
-            <ol className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-3">
-              {STEPS.map((s, i) => (
-                <li key={s.title} className="flex flex-col gap-3 border border-slate-200 p-6">
-                  <span className="flex size-9 items-center justify-center bg-brand text-sm font-bold text-white">{i + 1}</span>
-                  <h3 className="text-[17px] font-semibold">{s.title}</h3>
-                  <p className="text-[15px] leading-relaxed text-slate-600">{s.body}</p>
-                </li>
-              ))}
-            </ol>
+          </div>
           </div>
         </section>
 
-        <section id="faq" className="scroll-mt-16 lg:scroll-mt-[87px] bg-light">
-          <div className="mx-auto max-w-3xl px-5 py-16 lg:py-20">
+        <section id="fonctionnement" className="scroll-mt-16 lg:scroll-mt-[87px] w-full py-4">
+          <div className="px-5 lg:px-12 2xl:px-24">
+            <div className="overflow-hidden bg-light px-4 py-10 sm:px-8 lg:px-14 lg:py-14">
+              <div className="mx-auto mb-12 flex max-w-3xl flex-col gap-3 text-center">
+                <h2 className="heading text-[30px] leading-[1.15] sm:text-[38px]">
+                  Trois étapes, <em>sans abonnement.</em>
+                </h2>
+                <p className="text-[16px] text-slate-600">
+                  Vous choisissez vos leads et leur nombre, vous payez à la fiche, et vous rappelez des prospects qui
+                  viennent de demander un devis.
+                </p>
+              </div>
+              <ol className="mx-auto grid w-full max-w-[1140px] grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {STEPS.map((step, i) => (
+                  <li key={step.title} className="flex h-full flex-col bg-white p-4 shadow-[0_1px_4px_rgba(0,0,0,0.14)] transition-shadow duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.14)]">
+                    <div className="relative h-52 shrink-0 overflow-hidden">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={step.image} alt={step.imageAlt} loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
+                    </div>
+                    <div className="flex flex-1 flex-col gap-3 px-4 pb-3 pt-6">
+                      <span className="flex size-8 items-center justify-center bg-brand text-sm font-bold text-white">{i + 1}</span>
+                      <h3 className="heading text-[22px] leading-[1.2] text-ink lg:text-[24px]">{step.title}</h3>
+                      <p className="flex-1 text-[15px] leading-relaxed text-slate-700">{step.body}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+              <div className="mt-10 flex justify-center">
+                <a href="/inscription" className="inline-flex h-12 items-center gap-0.5 bg-brand px-6 text-[15px] font-bold text-white transition-colors hover:bg-brand-hover">
+                  Devenir partenaire
+                  <svg viewBox="0 0 24 24" className="size-[18px]" fill="none" stroke="currentColor" strokeWidth={2.5} aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="acces" className="scroll-mt-16 lg:scroll-mt-[87px] w-full py-4">
+          <div className="px-5 lg:px-12 2xl:px-24">
+          <div className="bg-light px-4 py-10 sm:px-8 lg:px-14 lg:py-14">
+          <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 lg:grid-cols-[1fr_1.4fr] lg:gap-16">
+            <div>
+              <Eyebrow>Demande d&apos;accès</Eyebrow>
+              <h2 className="heading mt-3 text-[30px] leading-[1.1] sm:text-[38px]">
+                Recevez vos premiers <em>leads.</em>
+              </h2>
+              <p className="mt-4 text-[16px] leading-relaxed text-slate-600">
+                Laissez-nous vos coordonnées : nous vérifions votre immatriculation ORIAS et vous rappelons pour définir
+                vos critères et votre volume.
+              </p>
+            </div>
+            <div className="bg-white">
+              <div className="h-1.5 bg-brand" aria-hidden="true" />
+              <div className="p-6 sm:p-8">
+                <AccessRequestForm />
+              </div>
+            </div>
+          </div>
+          </div>
+          </div>
+        </section>
+        <section id="faq" className="scroll-mt-16 lg:scroll-mt-[87px] w-full py-4">
+          <div className="px-5 lg:px-12 2xl:px-24">
+          <div className="bg-light px-4 py-10 sm:px-8 lg:px-14 lg:py-14">
+          <div className="mx-auto max-w-3xl">
             <Eyebrow>FAQ</Eyebrow>
             <h2 className="heading mt-3 text-[30px] leading-[1.1] sm:text-[38px]">Questions fréquentes</h2>
             <div className="mt-8 divide-y divide-slate-200 border-y border-slate-200 bg-white">
@@ -178,28 +290,10 @@ export default function Home() {
               ))}
             </div>
           </div>
-        </section>
-
-        <section id="acces" className="scroll-mt-16 lg:scroll-mt-[87px]">
-          <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 px-5 py-16 lg:grid-cols-[1fr_1.4fr] lg:gap-16 lg:px-12 lg:py-20">
-            <div>
-              <Eyebrow>Demande d&apos;accès</Eyebrow>
-              <h2 className="heading mt-3 text-[30px] leading-[1.1] sm:text-[38px]">
-                Recevez vos premiers <em>leads.</em>
-              </h2>
-              <p className="mt-4 text-[16px] leading-relaxed text-slate-600">
-                Laissez-nous vos coordonnées : nous vérifions votre immatriculation ORIAS et vous rappelons pour définir
-                vos critères et votre volume.
-              </p>
-            </div>
-            <div className="border border-slate-200">
-              <div className="h-1.5 bg-brand" aria-hidden="true" />
-              <div className="p-6 sm:p-8">
-                <AccessRequestForm />
-              </div>
-            </div>
+          </div>
           </div>
         </section>
+
       </main>
       <SiteFooter />
     </>

@@ -12,7 +12,7 @@ const sans = Google_Sans_Flex({
 
 export const metadata: Metadata = {
   title: "FicheAssur — Leads assurance qualifiés pour courtiers",
-  description: "Achetez des leads assurance auto, santé, véhicules pro et RC Pro : prospects qualifiés, consentement RGPD, réservé aux courtiers ORIAS.",
+  description: "Achetez des leads assurance auto, moto, pro de l'automobile et véhicules pro : prospects qualifiés, consentement RGPD, réservé aux courtiers ORIAS.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
