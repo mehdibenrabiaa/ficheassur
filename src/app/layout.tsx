@@ -1,0 +1,18 @@
+import type { Metadata } from "next";
+import { Geist } from "next/font/google";
+import "./globals.css";
+
+const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
+
+export const metadata: Metadata = {
+  title: "FicheAssur — Comparez vos devis d'assurance gratuitement",
+  description: "Recevez jusqu'à 3 devis d'assurance personnalisés en 2 minutes, gratuitement et sans engagement.",
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="fr" className={`${geistSans.variable} h-full antialiased`}>
+      <body className="min-h-full bg-slate-50 font-sans text-slate-900">{children}</body>
+    </html>
+  );
+}
