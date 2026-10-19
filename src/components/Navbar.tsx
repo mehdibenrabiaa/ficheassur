@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { CONTACT } from "@/lib/contact";
 
 // Same construction as the New World Courtage navbar: on desktop a bordered
 // logo cell spanning a thin utility row and the main row, which ends in a
@@ -16,7 +17,20 @@ const MAIN_LINKS = [
   { href: "/#faq", label: "FAQ" },
 ];
 
-const UTILITY_LINKS = [{ href: "/#acces", label: "Contact" }];
+// Right side of the utility row, as on NWC: accessibility, contact, phone.
+const UTILITY_LINKS: { href: string; label: string; icon: "eye" | "mail" | "phone" }[] = [
+  { href: "/accessibilite", label: "Accessibilité", icon: "eye" },
+  { href: `mailto:${CONTACT.email}`, label: "Contact", icon: "mail" },
+  { href: CONTACT.phoneHref, label: CONTACT.phoneDisplay, icon: "phone" },
+];
+
+// Outline icons matching the lucide set NWC's navbar uses (Eye, Mail, Phone).
+function UtilityIcon({ name }: { name: "eye" | "mail" | "phone" }) {
+  const common = { viewBox: "0 0 24 24", className: "size-[15px] shrink-0", fill: "none", stroke: "currentColor", strokeWidth: 1.75, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": true };
+  if (name === "eye") return <svg {...common}><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z" /><circle cx="12" cy="12" r="3" /></svg>;
+  if (name === "mail") return <svg {...common}><rect x="2" y="4" width="20" height="16" rx="2" /><path d="m22 7-10 6L2 7" /></svg>;
+  return <svg {...common}><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2Z" /></svg>;
+}
 
 function Logo({ size = "text-[24px]" }: { size?: string }) {
   return (
@@ -67,7 +81,9 @@ export default function Navbar() {
               </span>
               <div className="flex items-center gap-7">
                 {UTILITY_LINKS.map((l) => (
-                  <Link key={l.href} href={l.href} className="hover:text-brand">{l.label}</Link>
+                  <Link key={l.href} href={l.href} className="flex items-center gap-2 hover:text-brand">
+                    <UtilityIcon name={l.icon} /> {l.label}
+                  </Link>
                 ))}
               </div>
             </div>
@@ -147,14 +163,23 @@ export default function Navbar() {
             </Link>
           ))}
           <div className="border-b border-slate-200 bg-light">
-            {UTILITY_LINKS.map((l) => (
-              <Link key={l.href} href={l.href} onClick={() => setOpen(false)} className="block px-5 py-3 text-[14px] text-ink hover:text-brand">
-                {l.label}
+            {UTILITY_LINKS.slice(0, 1).map((l) => (
+              <Link key={l.href} href={l.href} onClick={() => setOpen(false)} className="flex items-center gap-3 px-5 py-3 text-[14px] text-ink hover:text-brand">
+                <UtilityIcon name={l.icon} /> {l.label}
               </Link>
             ))}
             <p className="flex items-center gap-2 px-5 pb-4 pt-1 text-[13px] text-slate-600">
               <ShieldIcon /> Réservé aux courtiers ORIAS
             </p>
+          </div>
+          <div className="flex flex-col gap-3 px-5 py-5">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Contact</p>
+            <a href={`mailto:${CONTACT.email}`} className="flex items-center gap-3 text-[14px] text-ink hover:text-brand">
+              <span className="text-brand"><UtilityIcon name="mail" /></span> {CONTACT.email}
+            </a>
+            <a href={CONTACT.phoneHref} className="flex items-center gap-3 text-[14px] text-ink hover:text-brand">
+              <span className="text-brand"><UtilityIcon name="phone" /></span> {CONTACT.phoneDisplay}
+            </a>
           </div>
         </nav>
 
