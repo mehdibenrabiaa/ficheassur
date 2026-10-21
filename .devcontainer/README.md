@@ -7,6 +7,7 @@
 
 The servers start by themselves. Open them from the **Ports** tab.
 
+- **Espace pro admin login:** run `cat ~/admin-login.txt`.
 - **Logs:** `tail -f /tmp/fa-backend.log` (or `fa-site.log`).
 - **Restart:** `bash /workspaces/ficheassur/.devcontainer/start.sh`.
 
