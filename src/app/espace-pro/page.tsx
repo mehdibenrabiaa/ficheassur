@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useBroker } from "@/components/ProShell";
-import { ErrorNote, PageHeader, Spinner, StatusBadge, card, primaryButton } from "@/components/pro/ui";
+import { card, CardsSkeleton, ErrorNote, PageHeader, primaryButton, StatusBadge } from "@/components/pro/ui";
 import { euros, dateTime, ago, marketLabel } from "@/lib/format";
 import { LEAD_TYPES } from "@/lib/leadTypes";
 import { CRM_STATUSES, getCrmSummary, type CrmSummary } from "@/lib/pro";
@@ -28,7 +28,7 @@ export default function EspaceProDashboard() {
       />
 
       {error && <ErrorNote>{error}</ErrorNote>}
-      {!data && !error && <Spinner className="self-center" />}
+      {!data && !error && <CardsSkeleton />}
 
       {data && (
         <>

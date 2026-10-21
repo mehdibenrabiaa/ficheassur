@@ -7,7 +7,10 @@
 const API_URL = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100").replace(/\/+$/, "");
 const TOKEN_KEY = "ficheassur_pro_token";
 
-export type Broker = { id: string; email: string; full_name: string; company: string; role: "broker" | "admin"; lead_types: string[] };
+export type Broker = {
+  id: string; email: string; full_name: string; company: string; role: "broker" | "admin"; lead_types: string[];
+  phone: string | null; orias_number: string | null; has_password: boolean; created_at: string | null;
+};
 
 export function getToken(): string | null {
   try {
@@ -84,7 +87,23 @@ export async function activate(token: string, password: string): Promise<Broker>
   return out.broker;
 }
 
+// "Continuer avec Google": signs in, or creates the account on first use.
+export async function googleSignIn(accessToken: string): Promise<Broker> {
+  const out = await api<{ access_token: string; broker: Broker }>("/api/v1/auth/google", { method: "POST", body: JSON.stringify({ access_token: accessToken }) });
+  setToken(out.access_token);
+  return out.broker;
+}
+
 export const me = () => api<Broker>("/api/v1/auth/me");
+export type ProfileInput = { full_name: string; company: string; phone: string | null; orias_number: string | null; lead_types: string[] };
+export const updateMe = (body: ProfileInput) => api<Broker>("/api/v1/auth/me", { method: "PATCH", body: JSON.stringify(body) });
+// Proof of identity: the current password, or (account created with Google, no password yet) a fresh
+// Google access token. Every other session is signed out; this one continues with the new token.
+export async function changePassword(proof: { current_password?: string; google_access_token?: string }, new_password: string): Promise<Broker> {
+  const out = await api<{ access_token: string; broker: Broker }>("/api/v1/auth/password", { method: "POST", body: JSON.stringify({ ...proof, new_password }) });
+  setToken(out.access_token);
+  return out.broker;
+}
 
 export type AccessRequest = {
   id: string; full_name: string; company: string; email: string; phone: string; orias_number: string | null;
@@ -112,15 +131,27 @@ export const listMarketLeads = (filters: { insurance_type?: string; department?:
 // One card payment per cart: "redirect" -> go to Stripe's payment page;
 // "paid" -> already delivered (simulated payments in local dev).
 export const checkout = (items: { lead_id: string; exclusive: boolean }[]) =>
-  api<{ status: "paid" | "redirect"; order_id: string; url?: string }>("/api/v1/marketplace/checkout", { method: "POST", body: JSON.stringify({ items }) });
+  api<{ status: "paid" | "embedded"; order_id: string; client_secret?: string }>("/api/v1/marketplace/checkout", { method: "POST", body: JSON.stringify({ items }) });
+export type OrderView = {
+  id: string; status: "pending" | "paid" | "expired"; total_cents: number; refunded_cents: number; expires_at: string;
+  items: { id: string; label: string; price_cents: number; purchase_id: string | null }[]; client_secret: string | null;
+};
+export const getOrder = (id: string) => api<OrderView>(`/api/v1/marketplace/orders/${id}`);
+export const confirmOrder = (id: string) => api<void>(`/api/v1/marketplace/orders/${id}/confirm`, { method: "POST" });
 export const cancelOrder = (id: string) => api<void>(`/api/v1/marketplace/orders/${id}/cancel`, { method: "POST" });
 
 export type Order = { id: string; total_cents: number; refunded_cents: number; paid_at: string; items: { label: string; price_cents: number }[] };
+export type SavedCard = { id: string; brand: string; last4: string; exp_month: number; exp_year: number; default: boolean };
 export type Billing = {
   simulated: boolean;
-  card: { brand: string; last4: string; exp_month: number; exp_year: number } | null;
+  card: SavedCard | null;
+  cards: SavedCard[];
   orders: Order[];
 };
+// Saved cards, managed in the espace pro (Stripe's card form embedded in the page).
+export const addCardSetup = () => api<{ client_secret: string }>("/api/v1/billing/cards/setup", { method: "POST" });
+export const setDefaultCard = (id: string) => api<void>(`/api/v1/billing/cards/${id}/default`, { method: "POST" });
+export const deleteCard = (id: string) => api<void>(`/api/v1/billing/cards/${id}`, { method: "DELETE" });
 
 export const getBilling = () => api<Billing>("/api/v1/billing");
 export const billingPortal = () => api<{ url: string }>("/api/v1/billing/portal", { method: "POST" });
@@ -143,7 +174,38 @@ export type CrmLead = {
 export type CrmLeadDetail = CrmLead & {
   notes: { id: string; body: string; created_at: string }[];
   events: { id: string; kind: string; detail: string; created_at: string }[];
+  revenues: Revenue[];
 };
+
+// What a bought lead earned (commission, fees...), and the finance summary built from it.
+export type Revenue = { id: string; amount_cents: number; label: string; invoiced_on: string; created_at: string };
+export const addRevenue = (purchaseId: string, body: { amount_cents: number; label: string; invoiced_on: string }) =>
+  api<Revenue>(`/api/v1/crm/leads/${purchaseId}/revenues`, { method: "POST", body: JSON.stringify(body) });
+export const deleteRevenue = (id: string) => api<void>(`/api/v1/crm/revenues/${id}`, { method: "DELETE" });
+export type FinanceTotals = { spent_cents: number; revenue_cents: number; leads: number; leads_with_revenue: number };
+export type Finance = {
+  totals: FinanceTotals & { expenses_cents: number };
+  by_market: (FinanceTotals & { insurance_type: string })[];
+  months: { month: string; spent_cents: number; revenue_cents: number; expenses_cents: number }[];
+  top_leads: { lead: LeadRef; price_cents: number; revenue_cents: number }[];
+};
+// Frais généraux: running costs besides leads (phone, internet, subscriptions...).
+export type ExpenseCategory = "phone" | "internet" | "software" | "other";
+export type ExpenseFrequency = "once" | "monthly" | "yearly";
+export type Expense = {
+  id: string; label: string; category: ExpenseCategory; amount_cents: number; frequency: ExpenseFrequency;
+  start_on: string; end_on: string | null; monthly_cents: number;
+};
+export const listExpenses = () => api<Expense[]>("/api/v1/crm/expenses");
+export const addExpense = (body: Omit<Expense, "id" | "monthly_cents" | "end_on">) =>
+  api<Expense>("/api/v1/crm/expenses", { method: "POST", body: JSON.stringify(body) });
+export const stopExpense = (id: string, end_on: string | null) =>
+  api<Expense>(`/api/v1/crm/expenses/${id}`, { method: "PATCH", body: JSON.stringify({ end_on }) });
+export const deleteExpense = (id: string) => api<void>(`/api/v1/crm/expenses/${id}`, { method: "DELETE" });
+// A period: each amount counted on its own date (purchase, invoice, month paid). null = open-ended.
+// With a market: that market only (frais généraux, which belong to none, are left out).
+export const getFinance = (since: string | null, until: string | null, market: string | null = null) =>
+  api<Finance>(`/api/v1/crm/finance${pageQuery({ since, until, market })}`);
 export type CrmSummary = { spent_month_cents: number; counts: Record<CrmStatus, number>; total: number; reminders_due: CrmLead[]; recent: CrmLead[] };
 
 const crmQuery = (filters: { status?: string; q?: string }) => {
@@ -158,6 +220,21 @@ export const updateCrmLead = (id: string, body: { status?: CrmStatus; reminder_a
 export const addCrmNote = (id: string, body: string) =>
   api<{ id: string; body: string; created_at: string }>(`/api/v1/crm/leads/${id}/notes`, { method: "POST", body: JSON.stringify({ body }) });
 export const getCrmSummary = () => api<CrmSummary>("/api/v1/crm/summary");
+
+// Portfolio views (the CRM section): every reminder, note and event across the broker's leads.
+export type LeadRef = { purchase_id: string; name: string; phone: string; city: string; insurance_type: string; status: CrmStatus };
+export type ReminderItem = { reminder_at: string; lead: LeadRef };
+export type PortfolioNote = { id: string; body: string; created_at: string; lead: LeadRef };
+export type ActivityItem = { id: string; kind: "purchased" | "status" | "reminder" | "note" | string; detail: string; created_at: string; lead: LeadRef };
+export const listReminders = () => api<ReminderItem[]>("/api/v1/crm/reminders");
+// Served a page at a time (newest first): pass back next_cursor to get the following page.
+export type Page<T> = { items: T[]; total: number; next_cursor: string | null };
+const pageQuery = (params: Record<string, string | null | undefined>) => {
+  const qs = new URLSearchParams(Object.entries(params).filter(([, v]) => v) as [string, string][]).toString();
+  return qs ? `?${qs}` : "";
+};
+export const listAllNotes = (q: string, cursor: string | null) => api<Page<PortfolioNote>>(`/api/v1/crm/notes${pageQuery({ q: q.trim(), cursor })}`);
+export const listActivity = (kind: string, cursor: string | null) => api<Page<ActivityItem>>(`/api/v1/crm/activity${pageQuery({ kind, cursor })}`);
 
 // The CSV needs the bearer token, so it's fetched and saved from a blob
 // rather than opened as a plain link.

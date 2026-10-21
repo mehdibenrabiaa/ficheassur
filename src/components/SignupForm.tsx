@@ -19,7 +19,6 @@ export default function SignupForm() {
   const [consent, setConsent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [googleNotice, setGoogleNotice] = useState(false);
   const set = (k: keyof typeof v) => (e: React.ChangeEvent<HTMLInputElement>) => setV((p) => ({ ...p, [k]: e.target.value }));
   const toggle = (t: string) => setTypes((p) => (p.includes(t) ? p.filter((x) => x !== t) : [...p, t]));
 
@@ -117,12 +116,7 @@ export default function SignupForm() {
       {error && <p role="alert" className="mt-5 text-sm text-red-600">{error}</p>}
 
       <div className="mt-8">
-        <GoogleButton onClick={() => setGoogleNotice(true)} />
-        {googleNotice && (
-          <p role="status" className="mt-3 border-l-4 border-accent bg-light p-3 text-[13px] leading-relaxed text-slate-700">
-            L&apos;inscription avec Google arrive bientôt. En attendant, remplissez le formulaire : votre compte est créé immédiatement.
-          </p>
-        )}
+        <GoogleButton beforeStart={() => (consent ? null : "Acceptez d'abord les conditions ci-dessous.")} />
       </div>
 
       <div className="mt-auto pt-10">

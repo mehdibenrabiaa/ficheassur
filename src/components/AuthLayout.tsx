@@ -102,11 +102,11 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           <Image src="/brand/ficheassur-logo.svg" alt="FicheAssur" width={140} height={32} priority unoptimized className="h-8 w-auto" />
         </Link>
         <nav className="flex items-stretch text-[15px] text-ink">
-          <a href="mailto:contact@newworldcourtage.com" className="flex items-center gap-2 px-3 hover:text-brand lg:px-4">
+          <Link href="/assistance" className="flex items-center gap-2 px-3 hover:text-brand lg:px-4">
             <Icon name="help" className="size-[22px]" />
             <span className="hidden sm:inline">Assistance</span>
             <span className="sr-only sm:hidden">Assistance</span>
-          </a>
+          </Link>
           <span className="my-1 w-px bg-slate-300" aria-hidden="true" />
           <Link href="/" className="flex items-center gap-2 px-3 hover:text-brand lg:px-4">
             <Icon name="close" className="size-[22px]" />
@@ -119,11 +119,9 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <div className="flex flex-1 flex-col lg:flex-row">
         <main className="flex w-full flex-col px-6 py-8 sm:px-10 lg:w-[440px] lg:shrink-0 lg:px-7">{children}</main>
 
-        <aside className="relative hidden flex-1 overflow-hidden lg:block" aria-label="Bienvenue">
+        <aside className="relative hidden flex-1 overflow-hidden lg:block">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/heroes/connexion.webp" alt="" className="absolute inset-0 h-full w-full object-cover object-top" />
-          <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-black/25 to-transparent" aria-hidden="true" />
-          <p className="relative pt-10 text-center text-[20px] font-medium uppercase tracking-wide text-white">Bienvenue</p>
           <SecurityTips />
         </aside>
       </div>

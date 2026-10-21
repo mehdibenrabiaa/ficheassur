@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ErrorNote, Spinner, card } from "@/components/pro/ui";
+import { card, CardsSkeleton, ErrorNote } from "@/components/pro/ui";
 import { dateShort, dateTime, euros, marketLabel } from "@/lib/format";
 import { LEAD_TYPES } from "@/lib/leadTypes";
+import RevenuePanel from "@/components/pro/RevenuePanel";
 import { addCrmNote, getCrmLead, updateCrmLead, type CrmLeadDetail, type CrmStatus } from "@/lib/pro";
 
 // One lead in the CRM, laid out like a Salesforce record page: a highlights
@@ -113,7 +114,7 @@ export default function LeadDetail() {
     setPicked(null);
   });
 
-  if (!lead) return error ? <ErrorNote>{error}</ErrorNote> : <Spinner className="self-center" />;
+  if (!lead) return error ? <ErrorNote>{error}</ErrorNote> : <CardsSkeleton />;
 
   const current = stageOf(lead.status);
   const selected = picked ?? current;
@@ -139,11 +140,12 @@ export default function LeadDetail() {
             <p className="text-[12px] font-semibold uppercase tracking-wide text-slate-500">Lead · {marketLabel(lead.insurance_type, LEAD_TYPES)}</p>
             <h1 className="text-[24px] font-bold leading-tight text-ink">{lead.first_name} {lead.last_name}</h1>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <a href={`tel:${lead.phone}`} className="inline-flex h-10 items-center gap-2 bg-brand px-4 text-[14px] font-bold text-white hover:bg-brand-hover">
+          {/* Phones: a full-width row of their own under the name. */}
+          <div className="flex w-full gap-2 sm:w-auto">
+            <a href={`tel:${lead.phone}`} className="inline-flex h-10 flex-1 items-center justify-center gap-2 bg-brand px-4 text-[14px] font-bold text-white hover:bg-brand-hover sm:flex-none">
               <Icon name="phone" /> Appeler
             </a>
-            <a href={`mailto:${lead.email}`} className="inline-flex h-10 items-center gap-2 border border-slate-300 bg-white px-4 text-[14px] font-semibold text-ink hover:border-brand">
+            <a href={`mailto:${lead.email}`} className="inline-flex h-10 flex-1 items-center justify-center gap-2 border border-slate-300 bg-white px-4 text-[14px] font-semibold text-ink hover:border-brand sm:flex-none">
               <Icon name="mail" /> Email
             </a>
           </div>
@@ -225,6 +227,8 @@ export default function LeadDetail() {
       </section>
 
       {error && <ErrorNote>{error}</ErrorNote>}
+
+      <RevenuePanel lead={lead} onChange={load} />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_400px]">
         {/* Details */}

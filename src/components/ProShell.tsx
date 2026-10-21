@@ -4,31 +4,48 @@ import { createContext, useContext, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { CONTACT } from "@/lib/contact";
+import BrandSplash from "@/components/BrandSplash";
 import { clearToken, getToken, me, type Broker } from "@/lib/pro";
 
-// The espace pro's shell, laid out like a Google pro console (Workspace,
-// Ads): its own app bar -- menu button, logo, help and an
-// avatar opening an account card -- over a sidebar of
-// sections (a slide-in drawer on phones). Also the auth check (no valid
-// session -> /connexion) and the signed-in broker, shared with every page
-// through useBroker().
+// The espace pro's shell, laid out like Stripe's dashboard: a full-height
+// sidebar (account switcher at the top, grouped sections, help pinned at the
+// bottom; collapsible to an icon rail on desktop like shadcn/ui's sidebar --
+// trigger in the top bar, Ctrl/Cmd+B, or a click on the sidebar's edge --
+// remembered per browser; a slide-in drawer on phones), a slim top bar with a lead search
+// and icon shortcuts, and pages on a plain white canvas. Also the auth check
+// (no valid session -> /connexion) and the signed-in broker, shared with
+// every page through useBroker().
 
 const BrokerContext = createContext<Broker | null>(null);
 export const useBroker = () => useContext(BrokerContext) as Broker;
+// For Mon compte: replace the signed-in broker after a profile change.
+const SetBrokerContext = createContext<(b: Broker) => void>(() => {});
+export const useSetBroker = () => useContext(SetBrokerContext);
 
-type NavIcon = "home" | "cart" | "list" | "user" | "inbox" | "wallet";
-type NavItem = { href: string; label: string; icon: NavIcon; soon?: boolean };
+type NavIcon = "home" | "cart" | "list" | "user" | "inbox" | "wallet" | "help" | "bell" | "note" | "activity" | "chart";
+type NavItem = { href: string; label: string; icon: NavIcon };
 
 const NAV: NavItem[] = [
   { href: "/espace-pro", label: "Tableau de bord", icon: "home" },
-  { href: "/espace-pro/acheter", label: "Acheter des leads", icon: "cart" },
-  { href: "/espace-pro/mes-leads", label: "Mes leads", icon: "list" },
+  { href: "/espace-pro/finances", label: "Finances", icon: "chart" },
   { href: "/espace-pro/paiements", label: "Paiements", icon: "wallet" },
 ];
-const ADMIN_NAV: NavItem[] = [{ href: "/espace-pro/admin/demandes", label: "Demandes d'accès", icon: "inbox" }];
+// Client relationship management: the portfolio, then its next steps, notes and history across all leads.
+const CRM_NAV: NavItem[] = [
+  { href: "/espace-pro/mes-leads", label: "Mes leads", icon: "list" },
+  { href: "/espace-pro/crm/rappels", label: "Rappels", icon: "bell" },
+  { href: "/espace-pro/crm/notes", label: "Notes", icon: "note" },
+  { href: "/espace-pro/crm/activite", label: "Activité", icon: "activity" },
+];
+const SHOP_NAV: NavItem[] = [{ href: "/espace-pro/acheter", label: "Acheter des leads", icon: "cart" }];
+const ADMIN_NAV: NavItem[] = [
+  { href: "/espace-pro/admin/demandes", label: "Demandes d'accès", icon: "inbox" },
+  { href: "/espace-pro/admin/assistance", label: "Messages d'assistance", icon: "help" },
+];
 
-type IconName = NavIcon | "logout" | "menu" | "help";
+type IconName = NavIcon | "logout" | "menu" | "search" | "settings" | "plus" | "chevron" | "collapse";
+
+const COLLAPSED_KEY = "ficheassur_sidebar_collapsed";
 
 function Icon({ name, className = "size-5" }: { name: IconName; className?: string }) {
   const p = { viewBox: "0 0 24 24", className: `${className} shrink-0`, fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": true };
@@ -41,6 +58,15 @@ function Icon({ name, className = "size-5" }: { name: IconName; className?: stri
     case "inbox": return <svg {...p}><path d="M22 12h-6l-2 3h-4l-2-3H2" /><path d="M5.5 5.1 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.5-6.9A2 2 0 0 0 16.7 4H7.3a2 2 0 0 0-1.8 1.1Z" /></svg>;
     case "menu": return <svg {...p}><path d="M4 6h16M4 12h16M4 18h16" /></svg>;
     case "help": return <svg {...p}><circle cx="12" cy="12" r="10" /><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01" /></svg>;
+    case "search": return <svg {...p}><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>;
+    case "settings": return <svg {...p}><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z" /></svg>;
+    case "plus": return <svg {...p} strokeWidth={2.4}><path d="M12 6v12M6 12h12" /></svg>;
+    case "bell": return <svg {...p}><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0" /></svg>;
+    case "note": return <svg {...p}><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z" /><path d="M14 3v6h6M8 13h8M8 17h5" /></svg>;
+    case "chart": return <svg {...p}><path d="M3 3v18h18" /><path d="M7 15v3M12 10v8M17 6v12" /></svg>;
+    case "activity": return <svg {...p}><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg>;
+    case "chevron": return <svg {...p}><path d="m7 10 5 5 5-5" /></svg>;
+    case "collapse": return <svg {...p}><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M9 4v16" /></svg>;
     default: return <svg {...p}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" /></svg>;
   }
 }
@@ -49,19 +75,11 @@ function initials(name: string) {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join("");
 }
 
-function Avatar({ broker, size = "size-9 text-[14px]" }: { broker: Broker; size?: string }) {
-  return (
-    <span className={`flex shrink-0 items-center justify-center rounded-full bg-brand font-medium text-white ${size}`} aria-hidden="true">
-      {initials(broker.full_name)}
-    </span>
-  );
-}
+const iconButton = "flex size-9 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-slate-100 hover:text-ink";
 
-// Round icon button, as in Google's app bars.
-const iconButton = "flex size-10 items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100 hover:text-ink";
-
-// The avatar's account card: who is signed in, "Gérer mon compte", sign out.
-function AccountMenu({ broker, onLogout }: { broker: Broker; onLogout: () => void }) {
+// Top of the sidebar, like Stripe's account switcher: the cabinet and the
+// signed-in broker; opens a menu with the account page and sign-out.
+function AccountSwitcher({ broker, onLogout, compact }: { broker: Broker; onLogout: () => void; compact: boolean }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -77,73 +95,70 @@ function AccountMenu({ broker, onLogout }: { broker: Broker; onLogout: () => voi
     };
   }, [open]);
 
+  const title = broker.company || broker.full_name;
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className="relative px-3">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        aria-label={`Compte FicheAssur : ${broker.full_name}`}
         aria-expanded={open}
-        aria-haspopup="dialog"
-        className="flex size-10 items-center justify-center rounded-full transition-shadow hover:ring-4 hover:ring-slate-100"
+        aria-haspopup="menu"
+        aria-label={compact ? `${title} — ${broker.full_name}` : undefined}
+        className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left transition-colors hover:bg-slate-100"
       >
-        <Avatar broker={broker} size="size-8 text-[13px]" />
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-brand text-[13px] font-bold text-white" aria-hidden="true">
+          {initials(title)}
+        </span>
+        {!compact && (
+          <>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-[14px] font-semibold text-ink">{title}</span>
+              <span className="block truncate text-[12px] text-slate-500">{broker.full_name}</span>
+            </span>
+            <Icon name="chevron" className="size-4 text-slate-500" />
+          </>
+        )}
       </button>
 
       {open && (
-        <div role="dialog" aria-label="Votre compte" className="absolute right-0 top-12 z-50 w-[320px] rounded-[28px] bg-light p-2 shadow-[0_4px_20px_rgba(0,0,0,0.18)]">
-          <p className="truncate px-4 pb-2 pt-2 text-center text-[13px] text-slate-600">{broker.email}</p>
-          <div className="flex flex-col items-center gap-3 rounded-[24px] bg-white px-5 py-6">
-            <Avatar broker={broker} size="size-16 text-[24px]" />
-            <div className="text-center">
-              <p className="text-[20px] text-ink">Bonjour {broker.full_name.split(" ")[0]} !</p>
-              <p className="mt-0.5 text-[13px] text-slate-500">{broker.company}</p>
-            </div>
-            <Link
-              href="/espace-pro/compte"
-              onClick={() => setOpen(false)}
-              className="rounded-full border border-slate-400 px-5 py-2 text-[14px] font-medium text-brand transition-colors hover:bg-brand/5"
-            >
-              Gérer mon compte
-            </Link>
-          </div>
-          <button
-            type="button"
-            onClick={onLogout}
-            className="mt-2 flex w-full items-center justify-center gap-2 rounded-full bg-white py-3 text-[14px] font-medium text-ink transition-colors hover:bg-slate-50"
-          >
-            <Icon name="logout" className="size-[18px]" /> Déconnexion
+        <div role="menu" className={`absolute top-full z-50 mt-1 ${compact ? "left-3 w-60" : "inset-x-3"} border border-slate-200 bg-white py-1 shadow-[0_8px_24px_rgba(0,0,0,0.12)]`}>
+          <p className="truncate px-4 py-2 text-[12px] text-slate-500">{broker.email}</p>
+          <Link role="menuitem" href="/espace-pro/compte" onClick={() => setOpen(false)} className="flex items-center gap-3 px-4 py-2 text-[14px] text-ink hover:bg-slate-50">
+            <Icon name="user" className="size-4" /> Mon compte
+          </Link>
+          <button role="menuitem" type="button" onClick={onLogout} className="flex w-full items-center gap-3 px-4 py-2 text-[14px] text-ink hover:bg-slate-50">
+            <Icon name="logout" className="size-4" /> Déconnexion
           </button>
-          <p className="px-4 pb-1 pt-3 text-center text-[12px] text-slate-500">
-            <Link href="/accessibilite" onClick={() => setOpen(false)} className="hover:underline">Accessibilité</Link>
-            {" · "}
-            <a href={`mailto:${CONTACT.email}`} className="hover:underline">Contact</a>
-          </p>
         </div>
       )}
     </div>
   );
 }
 
-function TopBar({ broker, onMenu, onLogout }: { broker: Broker | null; onMenu?: () => void; onLogout: () => void }) {
+// Searches the broker's leads (Mes leads reads ?q=).
+function LeadSearch() {
+  const router = useRouter();
+  const [q, setQ] = useState("");
   return (
-    <header className="sticky top-0 z-40 flex h-16 items-center gap-1 border-b border-slate-200 bg-white px-2 sm:px-4">
-      {onMenu && (
-        <button type="button" onClick={onMenu} aria-label="Menu principal" className={`${iconButton} md:hidden`}>
-          <Icon name="menu" className="size-6" />
-        </button>
-      )}
-      <Link href="/espace-pro" className="flex items-center gap-3 pl-2 pr-3" aria-label="Espace pro FicheAssur — Tableau de bord">
-        <Image src="/brand/ficheassur-logo.svg" alt="" width={140} height={32} priority unoptimized className="hidden h-7 w-auto sm:block" />
-      </Link>
-
-      <div className="ml-auto flex items-center gap-1">
-        <a href={`mailto:${CONTACT.email}?subject=Aide%20espace%20pro`} className={iconButton} title="Aide" aria-label="Aide">
-          <Icon name="help" />
-        </a>
-        {broker && <AccountMenu broker={broker} onLogout={onLogout} />}
-      </div>
-    </header>
+    <form
+      role="search"
+      onSubmit={(e) => {
+        e.preventDefault();
+        router.push(`/espace-pro/mes-leads${q.trim() ? `?q=${encodeURIComponent(q.trim())}` : ""}`);
+      }}
+      className="relative w-full max-w-md"
+    >
+      <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-500" />
+      <label htmlFor="pro-search" className="sr-only">Rechercher dans mes leads</label>
+      <input
+        id="pro-search"
+        type="search"
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        placeholder="Rechercher un lead"
+        className="h-9 w-full rounded-md bg-slate-100 pl-9 pr-3 text-[14px] text-ink outline-none transition placeholder:text-slate-500 focus:bg-white focus:ring-2 focus:ring-brand/30"
+      />
+    </form>
   );
 }
 
@@ -152,13 +167,54 @@ export default function ProShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [broker, setBroker] = useState<Broker | null>(null);
   const [drawer, setDrawer] = useState(false);
+  // Desktop only (the phone drawer always shows labels).
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return typeof window !== "undefined" && localStorage.getItem(COLLAPSED_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
+  function toggleCollapsed() {
+    setCollapsed((c) => {
+      try {
+        localStorage.setItem(COLLAPSED_KEY, c ? "0" : "1");
+      } catch {}
+      return !c;
+    });
+  }
+  // Collapsed rail: icons only, the label as a tooltip -- on desktop. In the
+  // phone drawer (below md) labels always show.
+  const rail = collapsed && !drawer;
+
+  // One trigger, as in shadcn: collapses the sidebar on desktop, opens the drawer on phones.
+  function toggleSidebar() {
+    if (window.matchMedia("(min-width: 768px)").matches) toggleCollapsed();
+    else setDrawer(true);
+  }
+
+  // Ctrl/Cmd+B toggles it, like shadcn's sidebar (and VS Code).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() === "b" && (e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey) {
+        e.preventDefault();
+        toggleSidebar();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
 
   useEffect(() => {
     if (!getToken()) {
       router.replace("/connexion");
       return;
     }
-    me().then(setBroker).catch(() => router.replace("/connexion"));
+    // At least 1 s of splash, even when everything loads faster: a deliberate welcome, not a flicker.
+    const minimum = new Promise((r) => setTimeout(r, 1000));
+    Promise.all([me(), minimum])
+      .then(([b]) => setBroker(b))
+      .catch(() => router.replace("/connexion"));
   }, [router]);
 
   function logout() {
@@ -166,48 +222,65 @@ export default function ProShell({ children }: { children: React.ReactNode }) {
     router.replace("/connexion");
   }
 
-  if (!broker) {
+  // Opening the espace pro (just logged in, or a fresh visit): the brand
+  // splash while the session is checked. Navigating inside the espace pro
+  // keeps this shell mounted, so it only shows on the way in.
+  if (!broker) return <BrandSplash />;
+
+  // Checkout (/espace-pro/paiement/<order>, not the Paiements history): no
+  // sidebar or top bar to pull the broker away from paying --
+  // just the logo and a "secure payment" mark, like any shop's checkout.
+  if (pathname.startsWith("/espace-pro/paiement/")) {
     return (
-      <>
-        <TopBar broker={null} onLogout={logout} />
-        <main className="flex min-h-[60vh] items-center justify-center bg-light">
-          <span className="size-6 animate-spin rounded-full border-2 border-brand border-t-transparent" aria-label="Chargement" />
-        </main>
-      </>
+      <BrokerContext.Provider value={broker}><SetBrokerContext.Provider value={setBroker}>
+        <div className="min-h-screen bg-slate-50">
+          <header className="border-b border-slate-200 bg-white">
+            <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4 md:px-8">
+              <Image src="/brand/ficheassur-logo.svg" alt="FicheAssur" width={140} height={32} priority unoptimized className="h-7 w-auto" />
+              <span className="flex items-center gap-2 text-[13px] font-semibold text-slate-600">
+                <svg viewBox="0 0 24 24" className="size-4 text-emerald-600" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <rect x="4" y="11" width="16" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" />
+                </svg>
+                Paiement sécurisé
+              </span>
+            </div>
+          </header>
+          <main className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-8 md:px-8 md:py-10">{children}</main>
+        </div>
+      </SetBrokerContext.Provider></BrokerContext.Provider>
     );
   }
 
   const isActive = (href: string) => (href === "/espace-pro" ? pathname === href : pathname.startsWith(href));
 
-  // Google-style nav item: a pill, tinted when it's the current page.
+  // Stripe-style item: a plain row, the current page in the brand colour.
   const link = (item: NavItem) => {
-    if (item.soon) {
-      return (
-        <span key={item.href} className="flex h-10 items-center gap-4 rounded-full px-4 text-[14px] text-slate-400">
-          <Icon name={item.icon} />
-          <span className="flex-1">{item.label}</span>
-          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">Bientôt</span>
-        </span>
-      );
-    }
     const active = isActive(item.href);
     return (
       <Link
         key={item.href}
         href={item.href}
         aria-current={active ? "page" : undefined}
-        className={`flex h-10 items-center gap-4 rounded-full px-4 text-[14px] transition-colors ${active ? "bg-brand/10 font-semibold text-brand" : "text-ink hover:bg-slate-100"}`}
+        data-tip={rail ? item.label : undefined}
+        data-tip-pos="right"
+        aria-label={rail ? item.label : undefined}
+        className={`flex h-9 items-center gap-3 rounded-md px-2 text-[14px] transition-colors hover:bg-slate-100 ${rail ? "md:justify-center" : ""} ${active ? "font-semibold text-brand" : "text-ink"}`}
       >
-        <Icon name={item.icon} />
-        {item.label}
+        <Icon name={item.icon} className={`size-[18px] ${active ? "text-brand" : "text-slate-500"}`} />
+        <span className={rail ? "md:sr-only" : ""}>{item.label}</span>
       </Link>
     );
   };
+  const group = (title: string, items: NavItem[]) => (
+    <div className="mt-6">
+      {rail ? <hr className="mx-2 mb-2 hidden border-slate-200 md:block" /> : null}
+      <p className={`mb-1 px-2 text-[12px] font-medium text-slate-500 ${rail ? "md:sr-only" : ""}`}>{title}</p>
+      {items.map(link)}
+    </div>
+  );
 
   return (
-    <BrokerContext.Provider value={broker}>
-      <TopBar broker={broker} onMenu={() => setDrawer(true)} onLogout={logout} />
-
+    <BrokerContext.Provider value={broker}><SetBrokerContext.Provider value={setBroker}>
       {/* Phone drawer backdrop */}
       <div
         className={`fixed inset-0 z-40 bg-black/40 transition-opacity md:hidden ${drawer ? "opacity-100" : "pointer-events-none opacity-0"}`}
@@ -215,30 +288,75 @@ export default function ProShell({ children }: { children: React.ReactNode }) {
         aria-hidden="true"
       />
 
-      <div className="bg-light md:flex">
+      {/* --sidebar-w: the sidebar's desktop width, for fixed bars that sit beside it (the cart's pay bar). */}
+      <div className="min-h-screen bg-white md:flex" style={{ "--sidebar-w": rail ? "68px" : "256px" } as React.CSSProperties}>
         <aside
-          className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-white pt-2 shadow-xl transition-transform duration-300 md:sticky md:top-16 md:z-auto md:h-[calc(100vh-4rem)] md:w-64 md:translate-x-0 md:bg-white md:pt-3 md:shadow-none ${drawer ? "translate-x-0" : "-translate-x-full"}`}
+          className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-slate-200 bg-white pt-3 shadow-xl transition-[transform,width] duration-300 md:sticky md:top-0 md:h-screen md:translate-x-0 md:shadow-none ${rail ? "md:w-[68px]" : "md:w-64"} ${drawer ? "translate-x-0" : "-translate-x-full"}`}
         >
-          <div className="flex h-14 items-center px-6 md:hidden">
-            <Image src="/brand/ficheassur-logo.svg" alt="FicheAssur" width={120} height={28} unoptimized className="h-7 w-auto" />
-          </div>
-          {/* Any click on a link closes the phone drawer. */}
-          <nav aria-label="Espace pro" onClick={() => setDrawer(false)} className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-3">
+          <AccountSwitcher broker={broker} onLogout={logout} compact={rail} />
+          {/* Any click on a link closes the phone drawer. Visible overflow when collapsed, so tooltips aren't clipped. */}
+          <nav aria-label="Espace pro" onClick={() => setDrawer(false)} className={`mt-4 flex flex-1 flex-col px-3 ${rail ? "md:overflow-visible" : "overflow-y-auto"}`}>
             {NAV.map(link)}
-            {broker.role === "admin" && (
-              <>
-                <p className="mb-1 mt-5 px-4 text-[12px] font-medium text-slate-500">Administration</p>
-                {ADMIN_NAV.map(link)}
-              </>
-            )}
+            {group("CRM", CRM_NAV)}
+            {group("Marketplace", SHOP_NAV)}
+            {broker.role === "admin" && group("Administration", ADMIN_NAV)}
           </nav>
-          <p className="px-7 py-4 text-[12px] text-slate-400">FicheAssur · Espace pro</p>
+          <Link
+            href="/assistance"
+            aria-label={rail ? "Assistance" : undefined}
+            data-tip={rail ? "Assistance" : undefined}
+            data-tip-pos="right"
+            className={`flex h-12 items-center gap-3 border-t border-slate-200 bg-slate-50 px-5 text-[14px] text-ink hover:bg-slate-100 ${rail ? "md:justify-center md:px-0" : ""}`}
+          >
+            <Icon name="help" className="size-[18px] text-slate-500" /> <span className={rail ? "md:sr-only" : ""}>Assistance</span>
+          </Link>
+          {/* The edge "rail": a thin hit area along the sidebar's border that toggles it (shadcn's SidebarRail). */}
+          <button
+            type="button"
+            onClick={toggleCollapsed}
+            tabIndex={-1}
+            aria-hidden="true"
+            className="absolute inset-y-0 -right-2 hidden w-4 cursor-ew-resize after:absolute after:inset-y-0 after:left-1/2 after:w-px after:transition-colors hover:after:bg-slate-300 md:block"
+          />
         </aside>
 
-        <main className="min-h-[calc(100vh-4rem)] min-w-0 flex-1 px-4 py-8 md:px-8 md:py-10">
-          <div className="mx-auto flex max-w-6xl flex-col gap-8">{children}</div>
-        </main>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <header className="sticky top-0 z-30 flex h-16 items-center gap-2 bg-white/95 px-4 backdrop-blur md:px-8">
+            <button
+              type="button"
+              onClick={toggleSidebar}
+              aria-label="Afficher ou masquer le menu"
+              data-tip="Menu (Ctrl+B)"
+              data-tip-pos="bottom"
+              className={`${iconButton} -ml-1 shrink-0`}
+            >
+              <Icon name="collapse" className="size-[18px]" />
+            </button>
+            <span className="mx-1 hidden h-5 w-px bg-slate-200 sm:block" aria-hidden="true" />
+            {/* Only where looking up a lead makes sense: not on pages with nothing to search, nor on
+                Mes leads, which has its own search box. */}
+            {(pathname === "/espace-pro" || pathname.startsWith("/espace-pro/crm/") || /^\/espace-pro\/mes-leads\/./.test(pathname)) && <LeadSearch />}
+            <div className="ml-auto flex items-center gap-1">
+              <Link href="/assistance" className={iconButton} data-tip="Assistance" data-tip-pos="bottom" aria-label="Assistance"><Icon name="help" /></Link>
+              <Link href="/espace-pro/compte" className={iconButton} data-tip="Mon compte" data-tip-pos="bottom" aria-label="Mon compte"><Icon name="settings" /></Link>
+              <Link
+                href="/espace-pro/acheter"
+                data-tip="Acheter des leads"
+                data-tip-pos="bottom"
+                data-tip-align="end"
+                aria-label="Acheter des leads"
+                className="ml-1 flex size-8 items-center justify-center rounded-full bg-brand text-white transition-colors hover:bg-brand-hover"
+              >
+                <Icon name="plus" className="size-4" />
+              </Link>
+            </div>
+          </header>
+
+          <main className="min-w-0 flex-1 px-4 pb-12 pt-4 md:px-8">
+            <div className="mx-auto flex max-w-6xl flex-col gap-8">{children}</div>
+          </main>
+        </div>
       </div>
-    </BrokerContext.Provider>
+    </SetBrokerContext.Provider></BrokerContext.Provider>
   );
 }

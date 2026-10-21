@@ -1,10 +1,14 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { getGoogleAccessToken } from "@/lib/google";
+import { googleSignIn } from "@/lib/pro";
+
 // Same "ou / Continuer avec Google" block as New World Courtage's
-// SocialAuthButtons (and its Google icon). FicheAssur's backend has no Google
-// sign-in yet, so `onClick` lets each form explain that instead of sending
-// the visitor to a dead route -- point it at the backend's OAuth start URL
-// once that exists.
+// SocialAuthButtons (and its Google icon). Signs in -- or creates the account
+// on first use -- then opens the espace pro. `beforeStart` lets a form block
+// it with a message (e.g. sign-up: the terms must be accepted first).
 export function GoogleIcon({ className }: { className?: string }) {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" className={className} aria-hidden="true">
@@ -16,7 +20,31 @@ export function GoogleIcon({ className }: { className?: string }) {
   );
 }
 
-export default function GoogleButton({ onClick }: { onClick: () => void }) {
+export default function GoogleButton({ beforeStart }: { beforeStart?: () => string | null }) {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  async function start() {
+    const blocked = beforeStart?.();
+    if (blocked) {
+      setError(blocked);
+      return;
+    }
+    setError("");
+    setBusy(true);
+    try {
+      const token = await getGoogleAccessToken();
+      if (!token) return; // popup closed
+      await googleSignIn(token);
+      router.push("/espace-pro");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Une erreur est survenue.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <div className="relative flex items-center">
@@ -26,12 +54,14 @@ export default function GoogleButton({ onClick }: { onClick: () => void }) {
       </div>
       <button
         type="button"
-        onClick={onClick}
-        className="inline-flex h-12 items-center justify-center gap-3 border border-slate-300 bg-white text-base font-medium text-slate-700 transition-colors hover:bg-slate-50"
+        onClick={start}
+        disabled={busy}
+        className="inline-flex h-12 items-center justify-center gap-3 border border-slate-300 bg-white text-base font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60"
       >
-        <GoogleIcon className="size-6" />
+        {busy ? <span className="size-5 animate-spin rounded-full border-2 border-slate-300 border-t-brand" aria-hidden="true" /> : <GoogleIcon className="size-6" />}
         Continuer avec Google
       </button>
+      {error && <p role="alert" className="text-[13px] text-red-600">{error}</p>}
     </div>
   );
 }

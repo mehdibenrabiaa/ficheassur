@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useBroker } from "@/components/ProShell";
+import { ListSkeleton } from "@/components/pro/ui";
 import { LEAD_TYPES } from "@/lib/leadTypes";
 import { acceptAccessRequest, listAccessRequests, type AccessRequest, type ActivationLink } from "@/lib/pro";
 
@@ -50,14 +51,14 @@ export default function DemandesAcces() {
   return (
     <>
       <div>
-        <h1 className="heading text-[30px] leading-tight text-ink">Demandes d&apos;accès</h1>
+        <h1 className="text-[28px] font-bold leading-tight tracking-tight text-ink sm:text-[32px]">Demandes d&apos;accès</h1>
         <p className="mt-1 text-[15px] text-slate-600">
           Vérifiez le numéro ORIAS, puis acceptez : le compte est créé et vous obtenez le lien d&apos;activation à envoyer au courtier (valable 7 jours).
         </p>
       </div>
       {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
       {!requests ? (
-        <span className="size-6 animate-spin self-center rounded-full border-2 border-brand border-t-transparent" aria-label="Chargement" />
+        <ListSkeleton rows={4} />
       ) : requests.length === 0 ? (
         <p className="bg-white p-6 text-[15px] text-slate-600">Aucune demande pour le moment.</p>
       ) : (

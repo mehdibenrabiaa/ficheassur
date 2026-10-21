@@ -16,7 +16,6 @@ export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [googleNotice, setGoogleNotice] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -64,19 +63,14 @@ export default function LoginForm() {
         </div>
       </div>
 
-      <a href="mailto:contact@newworldcourtage.com?subject=Mot%20de%20passe%20oubli%C3%A9%20FicheAssur" className="mt-6 self-center text-[14px] text-brand hover:underline">
+      <Link href="/assistance#contact" className="mt-6 self-center text-[14px] text-brand hover:underline">
         Mot de passe oublié ?
-      </a>
+      </Link>
 
       {error && <p role="alert" className="mt-5 text-sm text-red-600">{error}</p>}
 
       <div className="mt-8">
-        <GoogleButton onClick={() => setGoogleNotice(true)} />
-        {googleNotice && (
-          <p role="status" className="mt-3 border-l-4 border-accent bg-light p-3 text-[13px] leading-relaxed text-slate-700">
-            La connexion avec Google arrive bientôt. Utilisez votre email et votre mot de passe.
-          </p>
-        )}
+        <GoogleButton />
       </div>
 
       <div className="mt-auto pt-10">

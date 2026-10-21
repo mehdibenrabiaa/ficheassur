@@ -2,28 +2,22 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ErrorNote, PageHeader, Spinner, card, primaryButton } from "@/components/pro/ui";
+import { card, ErrorNote, ListSkeleton, PageHeader, primaryButton } from "@/components/pro/ui";
 import { dateTime, euros } from "@/lib/format";
-import { billingPortal, getBilling, type Billing } from "@/lib/pro";
+import CardsPanel from "@/components/pro/CardsPanel";
+import { getBilling, type Billing } from "@/lib/pro";
 
-// Payments: the saved card (managed on Stripe's page, which also has the
-// receipts) and every order paid, with the leads it contained.
+// Payments: the saved cards (added, set as default or removed right here --
+// Stripe's form is embedded, no detour through Stripe's site) and every order
+// paid, with the leads it contained.
 export default function Paiements() {
   const [data, setData] = useState<Billing | null>(null);
   const [error, setError] = useState("");
 
+  const load = () => getBilling().then(setData).catch((e) => setError(e.message));
   useEffect(() => {
-    getBilling().then(setData).catch((e) => setError(e.message));
+    load();
   }, []);
-
-  async function manageCards() {
-    setError("");
-    try {
-      window.location.assign((await billingPortal()).url);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Une erreur est survenue.");
-    }
-  }
 
   return (
     <>
@@ -31,31 +25,14 @@ export default function Paiements() {
       {error && <ErrorNote>{error}</ErrorNote>}
 
       {!data ? (
-        !error && <Spinner className="self-center" />
+        !error && <ListSkeleton />
       ) : (
         <>
-          <section className={`${card} flex flex-wrap items-center justify-between gap-4 p-6`}>
-            <div>
-              <p className="text-[13px] font-semibold text-slate-500">Moyen de paiement</p>
-              {data.simulated ? (
-                <p className="mt-1 text-[14px] text-slate-600">Mode test : les achats sont validés sans paiement réel.</p>
-              ) : data.card ? (
-                <p className="mt-1 text-[16px] font-semibold capitalize text-ink">
-                  {data.card.brand} •••• {data.card.last4}
-                  <span className="ml-2 text-[14px] font-normal normal-case text-slate-500">
-                    exp. {String(data.card.exp_month).padStart(2, "0")}/{data.card.exp_year}
-                  </span>
-                </p>
-              ) : (
-                <p className="mt-1 text-[14px] text-slate-600">Aucune carte enregistrée. Vous pourrez l&apos;enregistrer lors de votre premier paiement.</p>
-              )}
-            </div>
-            {!data.simulated && (
-              <button type="button" onClick={manageCards} className={primaryButton}>
-                {data.card ? "Gérer mes cartes et reçus" : "Ajouter une carte"}
-              </button>
-            )}
-          </section>
+          {data.simulated ? (
+            <section className={`${card} p-5 text-[14px] text-slate-600`}>Mode test : les achats sont validés sans paiement réel.</section>
+          ) : (
+            <CardsPanel cards={data.cards} onChange={load} />
+          )}
 
           <section className={card}>
             <h2 className="px-6 pt-6 text-[17px] font-bold text-ink">Historique des achats</h2>

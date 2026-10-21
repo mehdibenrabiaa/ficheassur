@@ -70,7 +70,7 @@ function Check({ className = "text-accent" }: { className?: string }) {
 }
 
 function Eyebrow({ children, light }: { children: React.ReactNode; light?: boolean }) {
-  return <p className={`text-[12px] font-bold uppercase tracking-[0.16em] ${light ? "text-white/70" : "text-brand"}`}>{children}</p>;
+  return <p className={`inline-block px-3 py-1 text-[12px] font-bold uppercase tracking-[0.16em] ${light ? "bg-white text-brand" : "bg-brand text-white"}`}>{children}</p>;
 }
 
 // Card photos, in public/leads/ (taken from New World Courtage's library
@@ -127,8 +127,7 @@ export default function Home() {
                   Des leads assurance <em className="whitespace-nowrap">prêts à signer.</em>
                 </h1>
                 <p className="mt-5 max-w-lg text-[17px] leading-relaxed text-white/85">
-                  Des particuliers et professionnels qui viennent de demander un devis, avec leur consentement, leur besoin
-                  et leurs réponses de qualification. Vous n&apos;avez plus qu&apos;à les rappeler.
+                  Des prospects qui viennent de demander un devis, qualifiés et consentants. Vous n&apos;avez plus qu&apos;à les rappeler.
                 </p>
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                   <a href="#acces" className="inline-flex h-12 items-center justify-center gap-1 border-2 border-white px-7 text-[15px] font-bold text-white transition-colors hover:bg-white hover:text-brand">
@@ -148,10 +147,15 @@ export default function Home() {
           <div className="px-5 lg:px-12 2xl:px-24">
           <div className="bg-light px-4 py-10 sm:px-8 lg:px-14 lg:py-14">
           <div className="mx-auto max-w-6xl">
-            <Eyebrow>Nos leads</Eyebrow>
-            <h2 className="heading mt-3 text-[30px] leading-[1.1] sm:text-[38px]">
-              Quatre marchés, <em>des prospects qualifiés.</em>
-            </h2>
+            <div className="text-center">
+              <Eyebrow>Nos leads</Eyebrow>
+              <h2 className="heading mt-3 text-[30px] leading-[1.1] sm:text-[38px]">
+                Quatre marchés, <em>des prospects qualifiés.</em>
+              </h2>
+              <p className="mx-auto mt-4 max-w-2xl text-[16px] leading-relaxed text-slate-600">
+                Choisissez les marchés que vous travaillez : chaque lead vient d&apos;une demande de devis récente, avec le besoin et le profil du prospect.
+              </p>
+            </div>
             <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {LEAD_TYPES.map((t) => (
                 <div key={t.value} className="flex flex-col bg-white shadow-[0_1px_4px_rgba(0,0,0,0.08)]">
@@ -185,10 +189,15 @@ export default function Home() {
           <div className="px-5 lg:px-12 2xl:px-24">
           <div className="bg-light px-4 py-10 sm:px-8 lg:px-14 lg:py-14">
           <div className="mx-auto max-w-6xl">
-            <Eyebrow>Qualité</Eyebrow>
-            <h2 className="heading mt-3 max-w-2xl text-[30px] leading-[1.1] sm:text-[38px]">
-              Chaque fiche est contrôlée <em>avant de vous parvenir.</em>
-            </h2>
+            <div className="text-center">
+              <Eyebrow>Qualité</Eyebrow>
+              <h2 className="heading mx-auto mt-3 max-w-2xl text-[30px] leading-[1.1] sm:text-[38px]">
+                Chaque fiche est contrôlée <em>avant de vous parvenir.</em>
+              </h2>
+              <p className="mx-auto mt-4 max-w-2xl text-[16px] leading-relaxed text-slate-600">
+                Coordonnées vérifiées, doublons écartés, consentement enregistré : vous ne payez que pour des prospects joignables et réellement intéressés.
+              </p>
+            </div>
             <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-4 md:grid-rows-[repeat(3,minmax(150px,auto))]">
               <div className="relative min-h-[320px] overflow-hidden md:col-span-2 md:row-span-3 md:min-h-0">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -251,13 +260,13 @@ export default function Home() {
         <section id="acces" className="scroll-mt-16 lg:scroll-mt-[87px] w-full py-4">
           <div className="px-5 lg:px-12 2xl:px-24">
           <div className="bg-light px-4 py-10 sm:px-8 lg:px-14 lg:py-14">
-          <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 lg:grid-cols-[1fr_1.4fr] lg:gap-16">
-            <div>
+          <div className="mx-auto flex max-w-3xl flex-col gap-10">
+            <div className="text-center">
               <Eyebrow>Demande d&apos;accès</Eyebrow>
               <h2 className="heading mt-3 text-[30px] leading-[1.1] sm:text-[38px]">
                 Recevez vos premiers <em>leads.</em>
               </h2>
-              <p className="mt-4 text-[16px] leading-relaxed text-slate-600">
+              <p className="mx-auto mt-4 max-w-2xl text-[16px] leading-relaxed text-slate-600">
                 Laissez-nous vos coordonnées : nous vérifions votre immatriculation ORIAS et vous rappelons pour définir
                 vos critères et votre volume.
               </p>
@@ -276,8 +285,13 @@ export default function Home() {
           <div className="px-5 lg:px-12 2xl:px-24">
           <div className="bg-light px-4 py-10 sm:px-8 lg:px-14 lg:py-14">
           <div className="mx-auto max-w-3xl">
-            <Eyebrow>FAQ</Eyebrow>
-            <h2 className="heading mt-3 text-[30px] leading-[1.1] sm:text-[38px]">Questions fréquentes</h2>
+            <div className="text-center">
+              <Eyebrow>FAQ</Eyebrow>
+              <h2 className="heading mt-3 text-[30px] leading-[1.1] sm:text-[38px]">Questions fréquentes</h2>
+              <p className="mx-auto mt-4 max-w-2xl text-[16px] leading-relaxed text-slate-600">
+                Tout ce qu&apos;il faut savoir avant de devenir partenaire : origine des leads, tarifs, exclusivité et fonctionnement.
+              </p>
+            </div>
             <div className="mt-8 divide-y divide-slate-200 border-y border-slate-200 bg-white">
               {FAQ.map((f) => (
                 <details key={f.q} className="group px-6">

@@ -13,6 +13,7 @@ const SITE_LINKS = [
   { label: "Qualité des leads", href: "/#qualite" },
   { label: "Fonctionnement", href: "/#fonctionnement" },
   { label: "Questions fréquentes", href: "/#faq" },
+  { label: "Assistance", href: "/assistance" },
   { label: "Devenir partenaire", href: "/inscription" },
   { label: "Espace pro", href: "/connexion" },
 ];

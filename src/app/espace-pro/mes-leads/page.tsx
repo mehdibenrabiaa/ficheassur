@@ -3,17 +3,18 @@
 import { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ErrorNote, PageHeader, Spinner, card, secondaryButton } from "@/components/pro/ui";
+import { card, ErrorNote, ListSkeleton, PageHeader, secondaryButton } from "@/components/pro/ui";
 import { dateShort, dateTime, marketLabel } from "@/lib/format";
 import { LEAD_TYPES } from "@/lib/leadTypes";
 import { CRM_STATUSES, downloadCrmCsv, listCrmLeads, updateCrmLead, type CrmLead, type CrmStatus } from "@/lib/pro";
+import Select from "@/components/Select";
 
 // The broker's CRM: every lead they bought, as a list (status editable in
 // place) or a kanban board (drag a card to another column), with search,
 // a status filter (?statut=, from the dashboard's pipeline) and CSV export.
 export default function MesLeads() {
   return (
-    <Suspense fallback={<Spinner className="self-center" />}>
+    <Suspense fallback={<ListSkeleton />}>
       <MesLeadsInner />
     </Suspense>
   );
@@ -23,7 +24,7 @@ function MesLeadsInner() {
   const router = useRouter();
   const params = useSearchParams();
   const status = (params.get("statut") ?? "") as CrmStatus | "";
-  const [q, setQ] = useState("");
+  const [q, setQ] = useState(params.get("q") ?? "");
   const [view, setView] = useState<"list" | "board">("list");
   const [leads, setLeads] = useState<CrmLead[] | null>(null);
   const [error, setError] = useState("");
@@ -114,16 +115,17 @@ function MesLeadsInner() {
       {error && <ErrorNote>{error}</ErrorNote>}
 
       {!leads ? (
-        <Spinner className="self-center" />
+        <ListSkeleton />
       ) : leads.length === 0 && !q && !status ? (
         <div className={`${card} flex flex-col items-center gap-3 p-10 text-center`}>
           <p className="text-[16px] font-semibold text-ink">Vous n&apos;avez pas encore de lead.</p>
           <Link href="/espace-pro/acheter" className="font-semibold text-brand hover:underline">Acheter vos premiers leads</Link>
         </div>
-      ) : view === "list" ? (
-        <ListView leads={leads} onMove={move} />
       ) : (
-        <BoardView leads={leads} onMove={move} />
+        // Keyed by view and status tab, so switching fades the new content in.
+        <div key={`${view}-${status}`} className="fade-in">
+          {view === "list" ? <ListView leads={leads} onMove={move} /> : <BoardView leads={leads} onMove={move} />}
+        </div>
       )}
     </>
   );
@@ -131,8 +133,34 @@ function MesLeadsInner() {
 
 function ListView({ leads, onMove }: { leads: CrmLead[]; onMove: (l: CrmLead, s: CrmStatus) => void }) {
   if (leads.length === 0) return <p className={`${card} p-8 text-center text-[15px] text-slate-600`}>Aucun lead ne correspond.</p>;
+  const statusOptions = CRM_STATUSES.map((s) => ({ value: s.value, label: s.label, dot: s.dot }));
   return (
-    <div className={`${card} overflow-x-auto`}>
+    <>
+    {/* Phones: one card per lead instead of a wide table. */}
+    <ul className="flex flex-col gap-3 sm:hidden">
+      {leads.map((l) => (
+        <li key={l.id} className={`${card} flex flex-col gap-3 p-4`}>
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <Link href={`/espace-pro/mes-leads/${l.id}`} className="block truncate text-[16px] font-semibold text-ink hover:text-brand">
+                {l.first_name} {l.last_name}
+              </Link>
+              <span className="text-[13px] text-slate-500">{marketLabel(l.insurance_type, LEAD_TYPES)} · {l.zip_code} {l.city}{l.exclusive ? " · Exclusif" : ""}</span>
+            </div>
+            <a href={`tel:${l.phone}`} aria-label={`Appeler ${l.first_name}`} className="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand text-white">
+              <svg viewBox="0 0 24 24" className="size-[18px]" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2Z" /></svg>
+            </a>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-44">
+              <Select size="sm" value={l.status} onChange={(v) => onMove(l, v as CrmStatus)} options={statusOptions} ariaLabel={`Statut de ${l.first_name} ${l.last_name}`} />
+            </div>
+            <span className="text-[12px] text-slate-500">{l.reminder_at ? `Rappel ${dateTime(l.reminder_at)}` : `Acheté le ${dateShort(l.purchased_at)}`}</span>
+          </div>
+        </li>
+      ))}
+    </ul>
+    <div className={`${card} hidden overflow-x-auto sm:block`}>
       <table className="w-full min-w-[720px] text-left text-[14px]">
         <thead className="border-b border-slate-200 text-[12px] font-semibold uppercase tracking-wide text-slate-500">
           <tr>
@@ -156,14 +184,15 @@ function ListView({ leads, onMove }: { leads: CrmLead[]; onMove: (l: CrmLead, s:
               <td className="px-4 py-3 text-slate-700">{marketLabel(l.insurance_type, LEAD_TYPES)}</td>
               <td className="px-4 py-3"><a href={`tel:${l.phone}`} className="whitespace-nowrap text-brand hover:underline">{l.phone}</a></td>
               <td className="px-4 py-3">
-                <select
-                  value={l.status}
-                  onChange={(e) => onMove(l, e.target.value as CrmStatus)}
-                  aria-label={`Statut de ${l.first_name} ${l.last_name}`}
-                  className="h-9 border border-slate-300 bg-white px-2 text-[13px] font-semibold outline-none focus:border-brand"
-                >
-                  {CRM_STATUSES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-                </select>
+                <div className="w-40">
+                  <Select
+                    size="sm"
+                    value={l.status}
+                    onChange={(v) => onMove(l, v as CrmStatus)}
+                    options={statusOptions}
+                    ariaLabel={`Statut de ${l.first_name} ${l.last_name}`}
+                  />
+                </div>
               </td>
               <td className="whitespace-nowrap px-4 py-3 text-slate-600">{l.reminder_at ? dateTime(l.reminder_at) : "—"}</td>
               <td className="whitespace-nowrap px-4 py-3 text-slate-600">{dateShort(l.purchased_at)}</td>
@@ -172,6 +201,7 @@ function ListView({ leads, onMove }: { leads: CrmLead[]; onMove: (l: CrmLead, s:
         </tbody>
       </table>
     </div>
+    </>
   );
 }
 

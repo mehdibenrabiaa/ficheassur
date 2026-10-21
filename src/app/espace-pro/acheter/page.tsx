@@ -1,38 +1,27 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { LeadGrouped } from "@/components/pro/leadViews";
-import { ErrorNote, PageHeader, Spinner, card, primaryButton, secondaryButton } from "@/components/pro/ui";
+import { card, ErrorDialog, ErrorNote, ListSkeleton, PageHeader, primaryButton, secondaryButton } from "@/components/pro/ui";
 import { euros } from "@/lib/format";
 import { LEAD_TYPES } from "@/lib/leadTypes";
-import { cancelOrder, checkout, listMarketLeads, type MarketLead } from "@/lib/pro";
+import { checkout, listMarketLeads, type MarketLead } from "@/lib/pro";
 
 // The marketplace: leads grouped by market (contact details hidden),
 // filtered by market and department. Each one goes in the cart as shared
 // (cheaper, up to N brokers) or exclusive (only you, then gone for
-// everyone); the cart is paid by card in one payment on Stripe, and the
-// leads land in "Mes leads" once the payment is confirmed.
+// everyone); "Payer" creates the order and opens its payment page
+// (/espace-pro/paiement/[id]), which confirms the purchase once paid.
 export default function AcheterDesLeads() {
-  return (
-    <Suspense fallback={<Spinner className="self-center" />}>
-      <Marketplace />
-    </Suspense>
-  );
-}
-
-function Marketplace() {
   const router = useRouter();
-  const params = useSearchParams();
-  const returned = params.get("commande"); // back from Stripe: "ok" | "annulee"
   const [market, setMarket] = useState("");
   const [department, setDepartment] = useState("");
   const [leads, setLeads] = useState<MarketLead[] | null>(null);
   const [cart, setCart] = useState<Record<string, boolean>>({}); // lead id -> exclusive
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [delivered, setDelivered] = useState(false);
+  const [payError, setPayError] = useState("");
 
   const load = useCallback(() => {
     const dep = department.trim();
@@ -46,12 +35,6 @@ function Marketplace() {
     return () => clearTimeout(t);
   }, [load]);
 
-  // Back from Stripe without paying: release the held leads straight away
-  // (they'd be released after 30 minutes anyway), then show them again.
-  const cancelledId = returned === "annulee" ? params.get("id") : null;
-  useEffect(() => {
-    if (cancelledId) cancelOrder(cancelledId).catch(() => {}).finally(load);
-  }, [cancelledId, load]);
 
   const byId = useMemo(() => Object.fromEntries((leads ?? []).map((l) => [l.id, l])), [leads]);
   const items = Object.entries(cart).filter(([id]) => byId[id]);
@@ -78,20 +61,15 @@ function Marketplace() {
 
   async function pay() {
     setBusy(true);
-    setError("");
-    setDelivered(false);
+    setPayError("");
     try {
+      // Paid by card on the payment page -- or already paid when payments
+      // are simulated (local dev), where that page shows the confirmation.
       const r = await checkout(items.map(([lead_id, exclusive]) => ({ lead_id, exclusive })));
-      if (r.status === "redirect" && r.url) {
-        window.location.assign(r.url); // Stripe's payment page
-        return;
-      }
-      setCart({});
-      setDelivered(true);
-      router.replace("/espace-pro/acheter");
-      load();
+      router.push(`/espace-pro/paiement/${r.order_id}`);
+      return;
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Une erreur est survenue.");
+      setPayError(e instanceof Error ? e.message : "Une erreur est survenue.");
     }
     setBusy(false);
   }
@@ -127,31 +105,21 @@ function Marketplace() {
         </label>
       </div>
 
-      {(delivered || returned === "ok") && (
-        <p role="status" className="flex flex-wrap items-center justify-between gap-3 border-l-4 border-emerald-600 bg-emerald-50 p-4 text-[14px] text-emerald-900">
-          Paiement confirmé : vos leads sont dans « Mes leads »{returned === "ok" && !delivered ? " (quelques secondes peuvent être nécessaires)" : ""}.
-          <Link href="/espace-pro/mes-leads" className="font-bold underline">Voir mes leads</Link>
-        </p>
-      )}
-      {returned === "annulee" && (
-        <p role="status" className="border-l-4 border-amber-500 bg-amber-50 p-4 text-[14px] text-amber-900">
-          Paiement annulé : aucun montant n&apos;a été débité.
-        </p>
-      )}
       {error && <ErrorNote>{error}</ErrorNote>}
+      <ErrorDialog title="Paiement impossible" message={payError} onClose={() => setPayError("")} />
 
       {!leads ? (
-        <Spinner className="self-center" />
+        <ListSkeleton />
       ) : leads.length === 0 ? (
         <p className={`${card} p-8 text-center text-[15px] text-slate-600`}>Aucun lead disponible pour ces critères pour le moment.</p>
       ) : (
-        <div className={items.length ? "pb-24" : ""}>
+        <div key={market} className={`fade-in ${items.length ? "pb-24" : ""}`}>
           <LeadGrouped leads={leads} cart={cart} onChoose={choose} onToggle={toggle} />
         </div>
       )}
 
       {items.length > 0 && (
-        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white shadow-[0_-4px_16px_rgba(0,0,0,0.08)] md:left-64">
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white shadow-[0_-4px_16px_rgba(0,0,0,0.08)] md:left-[var(--sidebar-w)]">
           <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 py-3 md:px-8">
             <div className="mr-auto">
               <p className="text-[15px] font-bold text-ink">
@@ -161,7 +129,7 @@ function Marketplace() {
             </div>
             <button type="button" onClick={() => setCart({})} className={secondaryButton}>Vider</button>
             <button type="button" onClick={pay} disabled={busy} className={primaryButton}>
-              {busy ? "Redirection…" : `Payer ${euros(total)}`}
+              {busy ? "Chargement…" : `Payer ${euros(total)}`}
             </button>
           </div>
         </div>

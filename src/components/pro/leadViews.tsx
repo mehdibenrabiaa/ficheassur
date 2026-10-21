@@ -7,7 +7,9 @@ import { LEAD_TYPES } from "@/lib/leadTypes";
 import type { MarketLead } from "@/lib/pro";
 
 // The marketplace's lead list ("Acheter des leads"): one collapsible
-// section per market, a compact row per lead with a Partagé | Exclusif switch.
+// section per market, a row per lead -- where, when, and every qualification
+// answer with its label -- and a Partagé | Exclusif switch. Contact details
+// are never sent here (the backend strips them until the lead is bought).
 
 export type LeadViewProps = {
   leads: MarketLead[];
@@ -36,7 +38,8 @@ function ModeSwitch({ lead, cart, onChoose, full = false }: { lead: MarketLead; 
         disabled={disabled}
         aria-pressed={selected}
         onClick={() => onChoose(lead, exclusive)}
-        title={disabled ? "Déjà acheté par un autre courtier" : undefined}
+        data-tip={disabled ? "Déjà acheté par un autre courtier" : undefined}
+        data-tip-align="end"
         className={`flex flex-1 flex-col items-center px-3 py-1.5 leading-tight transition-colors disabled:cursor-not-allowed disabled:text-slate-300 ${
           selected ? (exclusive ? "bg-accent text-white" : "bg-brand text-white") : "text-ink hover:bg-light"
         }`}
@@ -54,7 +57,7 @@ function ModeSwitch({ lead, cart, onChoose, full = false }: { lead: MarketLead; 
   );
 }
 
-const facts = (l: MarketLead) => Object.values(l.details).map(String);
+const facts = (l: MarketLead) => Object.entries(l.details).map(([label, value]) => [label, String(value)] as const);
 
 // Grouped by market: one collapsible section per market, compact rows inside.
 export function LeadGrouped({ leads, cart, onChoose, onToggle }: LeadViewProps) {
@@ -82,14 +85,39 @@ export function LeadGrouped({ leads, cart, onChoose, onToggle }: LeadViewProps) 
               <svg viewBox="0 0 24 24" className={`size-5 text-slate-500 transition-transform ${isClosed ? "" : "rotate-180"}`} fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
             </button>
             {!isClosed && (
-              <ul className="divide-y divide-slate-100 border-t border-slate-100">
+              // Each lead its own card, with space between and a blue stripe on the left, so rows don't run together.
+              <ul className="flex flex-col gap-3 border-t border-slate-100 bg-slate-50 p-3 sm:p-4">
                 {rows.map((l) => (
-                  <li key={l.id} className={`flex flex-wrap items-center gap-3 px-5 py-3 ${l.id in cart ? "bg-brand/5" : ""}`}>
-                    <input type="checkbox" checked={l.id in cart} onChange={() => onToggle(l)} aria-label={`Sélectionner le lead ${l.city}`} className="size-4 accent-brand" />
-                    <span className="w-44 shrink-0 text-[14px] font-semibold text-ink">{l.city} <span className="font-normal text-slate-500">({l.department})</span></span>
-                    <span className="min-w-0 flex-1 truncate text-[13px] text-slate-600">{facts(l).slice(0, 3).join(" · ")}</span>
-                    <span className="w-20 text-[12px] text-slate-500">{ago(l.created_at)}</span>
-                    <ModeSwitch lead={l} cart={cart} onChoose={onChoose} />
+                  <li
+                    key={l.id}
+                    className={`flex flex-col gap-3 rounded-md border border-l-4 bg-white px-4 py-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-colors sm:flex-row sm:items-center sm:gap-5 sm:px-5 ${
+                      l.id in cart ? "border-brand border-l-brand bg-brand/5" : "border-slate-200 border-l-accent hover:border-slate-300 hover:border-l-brand"
+                    }`}
+                  >
+                    <div className="flex min-w-0 flex-1 gap-3">
+                      <input type="checkbox" checked={l.id in cart} onChange={() => onToggle(l)} aria-label={`Sélectionner le lead ${l.city}`} className="mt-1 size-4 shrink-0 accent-brand" />
+                      <div className="flex min-w-0 flex-1 flex-col gap-2">
+                        <p className="flex flex-wrap items-baseline gap-x-2 text-[15px] text-ink">
+                          <span className="font-semibold">{l.city}</span>
+                          <span className="text-slate-500">({l.department})</span>
+                          {l.first_name_initial && <span className="text-[13px] text-slate-500">· Prospect {l.first_name_initial}</span>}
+                          <span className="text-[13px] text-slate-500">· {ago(l.created_at)}</span>
+                        </p>
+                        {facts(l).length > 0 && (
+                          <dl className="flex flex-wrap gap-1.5">
+                            {facts(l).map(([label, value]) => (
+                              <div key={label} className="flex items-baseline gap-1 rounded-md bg-slate-100 px-2.5 py-1 text-[13px]">
+                                <dt className="text-slate-500">{label} :</dt>
+                                <dd className="font-semibold text-ink">{value}</dd>
+                              </div>
+                            ))}
+                          </dl>
+                        )}
+                      </div>
+                    </div>
+                    <div className="shrink-0 pl-7 sm:pl-0">
+                      <ModeSwitch lead={l} cart={cart} onChoose={onChoose} />
+                    </div>
                   </li>
                 ))}
               </ul>

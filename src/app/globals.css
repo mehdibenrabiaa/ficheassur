@@ -1,16 +1,15 @@
 @import "tailwindcss";
 
-/* FicheAssur palette: Space blue (main), Pacific blue (actions), Sky blue
-   (highlights), Ice blue and Porcelain white (backgrounds). Square corners,
-   Google Sans Flex with a slanted emphasis word. */
+/* Theme inspired by New World Courtage: deep navy, sky-blue accent,
+   square corners, Google Sans Flex with a slanted emphasis word. */
 :root {
-  --brand: #124071;       /* Space blue -- main */
-  --brand-hover: #0c2e54;
-  --accent: #0091b3;      /* Pacific blue -- buttons, links on light backgrounds */
-  --accent-hover: #007896;
-  --sky: #3abfe0;         /* Sky blue -- highlights on dark backgrounds */
-  --light: #e5f4fb;       /* Ice blue */
-  --porcelain: #f9f9f9;   /* Porcelain white */
+  --brand: #062499;
+  --brand-hover: #041a73;
+  --accent: #3b9bd8;
+  --accent-hover: #2c87c2;
+  --sky: #3b9bd8;       /* highlights on dark backgrounds (same as accent) */
+  --light: #f3f5f7;
+  --porcelain: #f2f2f2;   /* form inputs */
   --ink: #262626;
 }
 
@@ -39,4 +38,173 @@ body { color: var(--ink); background: #fff; }
 .animate-step-in { animation: step-in 0.3s ease-out; }
 @media (prefers-reduced-motion: reduce) {
   .animate-step-in { animation: none; }
+}
+
+/* Tooltips: data-tip="…" on any element (keep an aria-label for screen
+   readers). Shown above by default, below with data-tip-pos="bottom" (for
+   things near the top of the screen). Replaces the browser's title tooltip. */
+[data-tip] {
+  position: relative;
+}
+[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  z-index: 60;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.3;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.18);
+  opacity: 0;
+  transform: translate(-50%, 4px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  transition-delay: 0s;
+}
+[data-tip][data-tip-pos="bottom"]::after {
+  bottom: auto;
+  top: calc(100% + 8px);
+  transform: translate(-50%, -4px);
+}
+[data-tip][data-tip-pos="right"]::after {
+  left: calc(100% + 10px);
+  bottom: auto;
+  top: 50%;
+  transform: translate(-4px, -50%);
+}
+[data-tip][data-tip-pos="right"]:hover::after,
+[data-tip][data-tip-pos="right"]:focus-visible::after {
+  transform: translate(0, -50%);
+}
+/* data-tip-align="end": right-aligned with the element, for things at the
+   screen's right edge -- a centred tooltip would stick out and, even while
+   invisible, give the page a horizontal scrollbar. */
+[data-tip][data-tip-align="end"]::after,
+[data-tip][data-tip-align="end"]:hover::after,
+[data-tip][data-tip-align="end"]:focus-visible::after {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+[data-tip]:hover::after,
+[data-tip]:focus-visible::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  transition-delay: 0.25s;
+}
+
+/* Page transitions: each page fades (and lifts slightly) in when you
+   navigate; see app/template.tsx and espace-pro/template.tsx. Also used for
+   in-page view switches (class "fade-in" on a keyed element). */
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+/* "backwards", not "both": once finished, the animation leaves no transform
+   behind -- a lingering one would trap position: fixed children (the cart's
+   pay bar) inside this element instead of the screen. */
+.fade-in {
+  animation: page-in 0.28s ease-out backwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .fade-in {
+    animation: none;
+  }
+  [data-tip]::after {
+    transition: none;
+  }
+}
+
+/* Loading, the Stripe way: shimmering placeholders shaped like the content
+   (.skeleton) and a thin progress bar along the top while a page loads
+   (components/TopLoader.tsx). */
+@keyframes shimmer {
+  from {
+    background-position: 150% 0;
+  }
+  to {
+    background-position: -50% 0;
+  }
+}
+/* In the components layer, so utilities on the element win (rounded-full
+   for an avatar placeholder, its size...). */
+@layer components {
+  .skeleton {
+    border-radius: 6px;
+    background: linear-gradient(90deg, #eef1f5 25%, #f8fafc 37%, #eef1f5 63%) 0 0 / 300% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+  }
+}
+@keyframes top-loader-grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(0.85);
+  }
+}
+.top-loader {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 100;
+  height: 3px;
+  transform-origin: left;
+  background: linear-gradient(90deg, var(--accent), var(--brand));
+  box-shadow: 0 0 8px rgb(59 155 216 / 0.6);
+  pointer-events: none;
+}
+.top-loader[data-state="loading"] {
+  animation: top-loader-grow 6s cubic-bezier(0.1, 0.7, 0.2, 1) forwards;
+}
+.top-loader[data-state="done"] {
+  transform: scaleX(1);
+  opacity: 0;
+  transition: transform 0.2s ease-out, opacity 0.3s ease 0.2s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}
+
+/* iPhones zoom the whole page into a form field whose text is under 16px;
+   on phone widths every field is 16px, so tapping one never zooms. */
+@media (max-width: 767px) {
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Brand splash (components/BrandSplash.tsx). */
+@keyframes splash-shine {
+  from { transform: translateX(-120%) skewX(-20deg); }
+  to { transform: translateX(220%) skewX(-20deg); }
+}
+@keyframes splash-bar {
+  from { transform: translateX(-110%); }
+  to { transform: translateX(330%); }
+}
+@keyframes splash-in {
+  from { opacity: 0; transform: translateY(6px); }
+}
+.splash { animation: splash-in 0.3s ease-out backwards; }
+.splash-shine {
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.75), transparent);
+  width: 30%;
+  animation: splash-shine 2.2s ease-in-out infinite;
+  mix-blend-mode: soft-light;
+}
+.splash-bar { animation: splash-bar 1.1s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .splash, .splash-shine, .splash-bar { animation: none; }
 }

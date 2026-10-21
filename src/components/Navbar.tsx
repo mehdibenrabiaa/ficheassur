@@ -22,7 +22,7 @@ const MAIN_LINKS = [
 // Right side of the utility row, as on NWC: accessibility, contact, phone.
 const UTILITY_LINKS: { href: string; label: string; icon: "eye" | "mail" | "phone" }[] = [
   { href: "/accessibilite", label: "Accessibilité", icon: "eye" },
-  { href: `mailto:${CONTACT.email}`, label: "Contact", icon: "mail" },
+  { href: "/assistance", label: "Assistance", icon: "mail" },
   { href: CONTACT.phoneHref, label: CONTACT.phoneDisplay, icon: "phone" },
 ];
 
