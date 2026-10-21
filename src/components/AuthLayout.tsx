@@ -133,7 +133,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
 // Form field styles shared by the account pages: grey fill, bottom border only.
 export const authInputClass =
-  "h-14 w-full rounded-none border-0 border-b border-slate-500 bg-[#f2f2f2] px-3 text-[16px] text-ink placeholder:text-slate-500 outline-none focus-visible:border-b-2 focus-visible:border-brand";
+  "h-14 w-full rounded-none border-0 border-b border-slate-500 bg-porcelain px-3 text-[16px] text-ink placeholder:text-slate-500 outline-none focus-visible:border-b-2 focus-visible:border-brand";
 
 export function AuthSubmit({ children, disabled }: { children: React.ReactNode; disabled?: boolean }) {
   return (

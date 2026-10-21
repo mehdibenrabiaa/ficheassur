@@ -2,21 +2,22 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { AuthSubmit, authInputClass } from "@/components/AuthLayout";
+import { useRouter } from "next/navigation";
+import { AuthSubmit, PasswordToggleIcon, authInputClass } from "@/components/AuthLayout";
 import { LEAD_TYPES } from "@/lib/leadTypes";
 import GoogleButton from "@/components/GoogleButton";
+import { register } from "@/lib/pro";
 
-const API_URL = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100").replace(/\/+$/, "");
-
-// Same design as New World Courtage's /inscription. A FicheAssur account is
-// opened only after the broker's ORIAS registration is checked, so "creating
-// an account" files a partner request (POST /api/v1/access-requests, the
-// same endpoint as the landing page's form) -- no password until then.
+// Same design as New World Courtage's /inscription. Self-service: the
+// account is created active (backend POST /api/v1/auth/register) and the
+// broker lands in the espace pro straight away -- no review to wait for.
 export default function SignupForm() {
-  const [v, setV] = useState({ full_name: "", company: "", email: "", phone: "", orias_number: "" });
+  const router = useRouter();
+  const [v, setV] = useState({ full_name: "", company: "", email: "", phone: "", orias_number: "", password: "" });
   const [types, setTypes] = useState<string[]>([]);
+  const [showPassword, setShowPassword] = useState(false);
   const [consent, setConsent] = useState(false);
-  const [state, setState] = useState<"idle" | "sending" | "sent">("idle");
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [googleNotice, setGoogleNotice] = useState(false);
   const set = (k: keyof typeof v) => (e: React.ChangeEvent<HTMLInputElement>) => setV((p) => ({ ...p, [k]: e.target.value }));
@@ -24,42 +25,20 @@ export default function SignupForm() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!consent || state === "sending") return;
+    if (!consent || loading) return;
     if (types.length === 0) {
       setError("Choisissez au moins un marché.");
       return;
     }
     setError("");
-    setState("sending");
+    setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/v1/access-requests`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...v, orias_number: v.orias_number || null, lead_types: types, message: null }),
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => null);
-        const detail = Array.isArray(body?.detail) ? String(body.detail[0]?.msg ?? "").replace(/^Value error, /, "") : body?.detail;
-        throw new Error(res.status === 429 ? "Trop de demandes. Réessayez plus tard." : detail || "Une erreur est survenue.");
-      }
-      setState("sent");
+      await register({ ...v, orias_number: v.orias_number || null, lead_types: types });
+      router.push("/espace-pro");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Une erreur est survenue.");
-      setState("idle");
+      setLoading(false);
     }
-  }
-
-  if (state === "sent") {
-    return (
-      <div className="flex flex-1 flex-col">
-        <h1 className="mb-5 text-center text-[28px] font-medium leading-tight text-ink">Demande envoyée</h1>
-        <div className="border-l-4 border-accent bg-light p-5 text-[15px] leading-relaxed text-slate-700">
-          <p className="font-bold text-ink">Merci, nous revenons vers vous sous 24 h.</p>
-          <p className="mt-2">Nous vérifions votre immatriculation ORIAS, puis nous vous envoyons vos accès à l&apos;espace pro par email.</p>
-        </div>
-        <Link href="/" className="mt-8 self-center text-[14px] font-semibold text-brand hover:underline">Retour à l&apos;accueil</Link>
-      </div>
-    );
   }
 
   return (
@@ -86,7 +65,32 @@ export default function SignupForm() {
         </div>
         <div>
           <label htmlFor="orias" className="sr-only">Numéro ORIAS</label>
-          <input id="orias" inputMode="numeric" placeholder="Numéro ORIAS (8 chiffres)" value={v.orias_number} onChange={set("orias_number")} className={authInputClass} />
+          <input id="orias" inputMode="numeric" placeholder="Numéro ORIAS (8 chiffres, facultatif)" value={v.orias_number} onChange={set("orias_number")} className={authInputClass} />
+        </div>
+        <div>
+          <div className="relative">
+            <label htmlFor="password" className="sr-only">Mot de passe</label>
+            <input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="new-password"
+              placeholder="Choisissez un mot de passe"
+              minLength={8}
+              value={v.password}
+              onChange={set("password")}
+              required
+              className={`${authInputClass} pr-12`}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((s) => !s)}
+              aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+              className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-slate-600 hover:text-ink"
+            >
+              <PasswordToggleIcon shown={showPassword} />
+            </button>
+          </div>
+          <p className="mt-1.5 text-[13px] text-slate-500">8 caractères minimum.</p>
         </div>
       </div>
 
@@ -116,7 +120,7 @@ export default function SignupForm() {
         <GoogleButton onClick={() => setGoogleNotice(true)} />
         {googleNotice && (
           <p role="status" className="mt-3 border-l-4 border-accent bg-light p-3 text-[13px] leading-relaxed text-slate-700">
-            L&apos;inscription avec Google arrive bientôt. En attendant, remplissez le formulaire : nous vérifions votre ORIAS et vous envoyons vos accès.
+            L&apos;inscription avec Google arrive bientôt. En attendant, remplissez le formulaire : votre compte est créé immédiatement.
           </p>
         )}
       </div>
@@ -124,13 +128,13 @@ export default function SignupForm() {
       <div className="mt-auto pt-10">
         <label htmlFor="consent" className="mb-5 flex items-start gap-2.5 text-[14px] leading-snug text-slate-700">
           <input id="consent" type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 size-4 shrink-0 accent-brand" />
-          <span>J&apos;accepte d&apos;être recontacté par FicheAssur au sujet de ma demande d&apos;ouverture de compte.</span>
+          <span>J&apos;accepte d&apos;être contacté par FicheAssur au sujet de mon compte.</span>
         </label>
         <p className="mb-4 text-center text-[14px] text-slate-600">
           Déjà un compte ?{" "}
           <Link href="/connexion" className="font-semibold text-brand hover:underline">Se connecter</Link>
         </p>
-        <AuthSubmit disabled={!consent || state === "sending"}>{state === "sending" ? "Envoi en cours…" : "Créer mon compte"}</AuthSubmit>
+        <AuthSubmit disabled={!consent || loading}>{loading ? "Création du compte…" : "Créer mon compte"}</AuthSubmit>
       </div>
     </form>
   );

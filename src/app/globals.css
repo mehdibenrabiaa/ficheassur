@@ -1,13 +1,16 @@
 @import "tailwindcss";
 
-/* Theme inspired by New World Courtage: deep navy, sky-blue accent,
-   square corners, Google Sans Flex with a slanted emphasis word. */
+/* FicheAssur palette: Space blue (main), Pacific blue (actions), Sky blue
+   (highlights), Ice blue and Porcelain white (backgrounds). Square corners,
+   Google Sans Flex with a slanted emphasis word. */
 :root {
-  --brand: #062499;
-  --brand-hover: #041a73;
-  --accent: #3b9bd8;
-  --accent-hover: #2c87c2;
-  --light: #f3f5f7;
+  --brand: #124071;       /* Space blue -- main */
+  --brand-hover: #0c2e54;
+  --accent: #0091b3;      /* Pacific blue -- buttons, links on light backgrounds */
+  --accent-hover: #007896;
+  --sky: #3abfe0;         /* Sky blue -- highlights on dark backgrounds */
+  --light: #e5f4fb;       /* Ice blue */
+  --porcelain: #f9f9f9;   /* Porcelain white */
   --ink: #262626;
 }
 
@@ -16,7 +19,9 @@
   --color-brand-hover: var(--brand-hover);
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
+  --color-sky: var(--sky);
   --color-light: var(--light);
+  --color-porcelain: var(--porcelain);
   --color-ink: var(--ink);
   --font-sans: var(--font-sans-flex);
   --radius-sm: 0; --radius: 0; --radius-md: 0; --radius-lg: 0; --radius-xl: 0; --radius-2xl: 0;

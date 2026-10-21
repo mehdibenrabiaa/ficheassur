@@ -1,42 +1,126 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useBroker } from "@/components/ProShell";
+import { ErrorNote, PageHeader, Spinner, StatusBadge, card, primaryButton } from "@/components/pro/ui";
+import { euros, dateTime, ago, marketLabel } from "@/lib/format";
 import { LEAD_TYPES } from "@/lib/leadTypes";
+import { CRM_STATUSES, getCrmSummary, type CrmSummary } from "@/lib/pro";
 
-// Espace pro home. Buying leads and "Mes leads" (the mini-CRM) come in the
-// next phases -- the cards say so rather than showing empty numbers.
+// Espace pro home: spending this month, the pipeline at a glance, callbacks due today
+// (or overdue), and the latest leads bought.
 export default function EspaceProDashboard() {
   const broker = useBroker();
-  const markets = LEAD_TYPES.filter((t) => broker.lead_types.includes(t.value)).map((t) => t.label);
+  const [data, setData] = useState<CrmSummary | null>(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    getCrmSummary().then(setData).catch((e) => setError(e.message));
+  }, []);
 
   return (
     <>
-      <div>
-        <h1 className="heading text-[30px] leading-tight text-ink">Bonjour {broker.full_name.split(" ")[0]}</h1>
-        <p className="mt-1 text-[15px] text-slate-600">Bienvenue dans votre espace pro FicheAssur.</p>
-      </div>
+      <PageHeader
+        title={`Bonjour ${broker.full_name.split(" ")[0]}`}
+        subtitle="Voici où en sont vos leads aujourd'hui."
+        action={<Link href="/espace-pro/acheter" className={primaryButton}>Acheter des leads</Link>}
+      />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {[
-          { title: "Acheter des leads", text: "Choisissez vos leads par marché et par zone, en partagé ou en exclusivité, et payez à la fiche." },
-          { title: "Mes leads", text: "Retrouvez vos leads achetés, suivez-les comme dans un CRM : statut, notes, rappels." },
-        ].map((c) => (
-          <div key={c.title} className="flex flex-col gap-2 bg-white p-6 shadow-[0_1px_4px_rgba(0,0,0,0.08)]">
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="text-[17px] font-bold text-ink">{c.title}</h2>
-              <span className="rounded-full bg-light px-2.5 py-0.5 text-[12px] font-semibold text-slate-500">Bientôt</span>
+      {error && <ErrorNote>{error}</ErrorNote>}
+      {!data && !error && <Spinner className="self-center" />}
+
+      {data && (
+        <>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className={`${card} flex flex-col gap-1 p-6`}>
+              <p className="text-[13px] font-semibold text-slate-500">Dépensé ce mois-ci</p>
+              <p className="heading text-[34px] leading-none text-ink">{euros(data.spent_month_cents)}</p>
+              <Link href="/espace-pro/paiements" className="mt-2 text-[14px] font-semibold text-brand hover:underline">Mes paiements</Link>
             </div>
-            <p className="text-[14px] leading-relaxed text-slate-600">{c.text}</p>
+            <div className={`${card} flex flex-col gap-1 p-6`}>
+              <p className="text-[13px] font-semibold text-slate-500">Leads achetés</p>
+              <p className="heading text-[34px] leading-none text-ink">{data.total}</p>
+              <Link href="/espace-pro/mes-leads" className="mt-2 text-[14px] font-semibold text-brand hover:underline">Voir mes leads</Link>
+            </div>
+            <div className={`${card} flex flex-col gap-1 p-6`}>
+              <p className="text-[13px] font-semibold text-slate-500">Taux de signature</p>
+              <p className="heading text-[34px] leading-none text-ink">
+                {data.total ? `${Math.round((data.counts.won / data.total) * 100)} %` : "—"}
+              </p>
+              <p className="mt-2 text-[14px] text-slate-500">{data.counts.won} signé{data.counts.won > 1 ? "s" : ""}</p>
+            </div>
           </div>
-        ))}
-      </div>
 
-      <div className="bg-white p-6 shadow-[0_1px_4px_rgba(0,0,0,0.08)]">
-        <h2 className="text-[17px] font-bold text-ink">Vos marchés</h2>
-        <p className="mt-1 text-[14px] text-slate-600">
-          {markets.length ? markets.join(" · ") : "Aucun marché choisi pour le moment."}
-        </p>
-      </div>
+          <section className={`${card} p-6`}>
+            <h2 className="text-[17px] font-bold text-ink">Pipeline</h2>
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-5">
+              {CRM_STATUSES.map((s) => (
+                <Link key={s.value} href={`/espace-pro/mes-leads?statut=${s.value}`} className="flex flex-col gap-1 bg-light p-4 transition-colors hover:bg-slate-200/60">
+                  <span className="flex items-center gap-2 text-[13px] font-semibold text-slate-600">
+                    <span className={`size-2 rounded-full ${s.dot}`} aria-hidden="true" /> {s.label}
+                  </span>
+                  <span className="text-[24px] font-bold text-ink">{data.counts[s.value]}</span>
+                </Link>
+              ))}
+            </div>
+          </section>
+
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <section className={`${card} p-6`}>
+              <h2 className="text-[17px] font-bold text-ink">Rappels du jour</h2>
+              {data.reminders_due.length === 0 ? (
+                <p className="mt-3 text-[14px] text-slate-500">Aucun rappel prévu aujourd&apos;hui.</p>
+              ) : (
+                <ul className="mt-3 divide-y divide-slate-100">
+                  {data.reminders_due.map((l) => {
+                    const late = l.reminder_at && new Date(l.reminder_at) < new Date();
+                    return (
+                      <li key={l.id}>
+                        <Link href={`/espace-pro/mes-leads/${l.id}`} className="flex items-center justify-between gap-3 py-3 hover:text-brand">
+                          <span className="min-w-0">
+                            <span className="block truncate font-semibold">{l.first_name} {l.last_name}</span>
+                            <span className="text-[13px] text-slate-500">{l.phone}</span>
+                          </span>
+                          <span className={`shrink-0 text-[13px] font-semibold ${late ? "text-red-600" : "text-slate-600"}`}>
+                            {late ? "En retard · " : ""}{dateTime(l.reminder_at!)}
+                          </span>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </section>
+
+            <section className={`${card} p-6`}>
+              <h2 className="text-[17px] font-bold text-ink">Derniers achats</h2>
+              {data.recent.length === 0 ? (
+                <div className="mt-3 flex flex-col items-start gap-3">
+                  <p className="text-[14px] text-slate-500">Vous n&apos;avez pas encore acheté de lead.</p>
+                  <Link href="/espace-pro/acheter" className="text-[14px] font-semibold text-brand hover:underline">Parcourir les leads disponibles</Link>
+                </div>
+              ) : (
+                <ul className="mt-3 divide-y divide-slate-100">
+                  {data.recent.map((l) => (
+                    <li key={l.id}>
+                      <Link href={`/espace-pro/mes-leads/${l.id}`} className="flex items-center justify-between gap-3 py-3 hover:text-brand">
+                        <span className="min-w-0">
+                          <span className="block truncate font-semibold">{l.first_name} {l.last_name}</span>
+                          <span className="text-[13px] text-slate-500">
+                            {marketLabel(l.insurance_type, LEAD_TYPES)} · {l.city} · {ago(l.purchased_at)}
+                          </span>
+                        </span>
+                        <StatusBadge status={l.status} />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          </div>
+        </>
+      )}
     </>
   );
 }
