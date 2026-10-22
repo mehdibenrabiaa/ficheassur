@@ -38,10 +38,10 @@ function UtilityIcon({ name }: { name: "eye" | "mail" | "phone" }) {
 
 // The FicheAssur logo (marketing assets/fiche_assurance_logo.svg, copied to
 // public/brand/). An SVG, so served as is rather than through the image
-// optimizer; sized by height, the width follows its 4.37:1 shape.
-function Logo({ className = "h-10" }: { className?: string }) {
+// optimizer; sized by height, the width follows its 3.34:1 shape.
+function Logo({ className = "h-12" }: { className?: string }) {
   return (
-    <Image src="/brand/ficheassur-logo.svg" alt="FicheAssur" width={175} height={40} priority unoptimized className={`${className} w-auto`} />
+    <Image src="/brand/ficheassur-logo.svg" alt="FicheAssur" width={161} height={48} priority unoptimized className={`${className} w-auto`} />
   );
 }
 
@@ -127,7 +127,7 @@ export default function Navbar() {
         {/* Mobile */}
         <div className="flex h-16 items-stretch lg:hidden">
           <Link href="/" className="flex shrink-0 items-center border-r border-slate-200 px-4">
-            <Logo className="h-8" />
+            <Logo className="h-10" />
           </Link>
           <div className="flex-1" />
           {!broker && (
@@ -171,7 +171,7 @@ export default function Navbar() {
       >
         <div className="flex h-16 items-stretch border-b border-slate-200">
           <Link href="/" onClick={() => setOpen(false)} className="flex items-center border-r border-slate-200 px-4">
-            <Logo className="h-8" />
+            <Logo className="h-10" />
           </Link>
           <div className="flex-1" />
           <button type="button" onClick={() => setOpen(false)} aria-label="Fermer le menu" className="flex w-14 items-center justify-center hover:bg-slate-50">

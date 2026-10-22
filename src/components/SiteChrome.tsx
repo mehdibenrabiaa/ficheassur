@@ -46,7 +46,7 @@ export function SiteFooter() {
         <div className="flex flex-col gap-10 border-b border-white/20 pb-12 md:flex-row md:gap-12 lg:gap-16">
           <div className="shrink-0">
             <Link href="/" aria-label="FicheAssur — Accueil">
-              <Image src="/brand/ficheassur-logo-white.svg" alt="FicheAssur" width={184} height={40} unoptimized loading="eager" className="h-10 w-auto" />
+              <Image src="/brand/ficheassur-logo-white.svg" alt="FicheAssur" width={161} height={48} unoptimized loading="eager" className="h-12 w-auto" />
             </Link>
             <p className="mt-4 max-w-[240px] text-[14px] leading-relaxed text-white/75">
               Leads assurance qualifiés, réservés aux courtiers immatriculés à l&apos;ORIAS.

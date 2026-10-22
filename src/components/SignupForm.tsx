@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AuthSubmit, PasswordToggleIcon, authInputClass } from "@/components/AuthLayout";
-import { LEAD_TYPES } from "@/lib/leadTypes";
 import GoogleButton from "@/components/GoogleButton";
 import { useRedirectIfLoggedIn } from "@/components/NavAccount";
 import { register } from "@/lib/pro";
@@ -12,29 +11,25 @@ import { register } from "@/lib/pro";
 // Same design as New World Courtage's /inscription. Self-service: the
 // account is created active (backend POST /api/v1/auth/register) and the
 // broker lands in the espace pro straight away -- no review to wait for.
+// Markets and the ORIAS number aren't asked here, to keep sign-up short
+// (both can be filled in later in Mon compte).
 export default function SignupForm() {
   const router = useRouter();
   useRedirectIfLoggedIn(); // already logged in: straight to the espace pro
-  const [v, setV] = useState({ full_name: "", company: "", email: "", phone: "", orias_number: "", password: "" });
-  const [types, setTypes] = useState<string[]>([]);
+  const [v, setV] = useState({ full_name: "", company: "", email: "", phone: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [consent, setConsent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const set = (k: keyof typeof v) => (e: React.ChangeEvent<HTMLInputElement>) => setV((p) => ({ ...p, [k]: e.target.value }));
-  const toggle = (t: string) => setTypes((p) => (p.includes(t) ? p.filter((x) => x !== t) : [...p, t]));
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!consent || loading) return;
-    if (types.length === 0) {
-      setError("Choisissez au moins un marché.");
-      return;
-    }
     setError("");
     setLoading(true);
     try {
-      await register({ ...v, orias_number: v.orias_number || null, lead_types: types });
+      await register({ ...v, orias_number: null, lead_types: [] });
       router.push("/espace-pro");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Une erreur est survenue.");
@@ -65,10 +60,6 @@ export default function SignupForm() {
           <input id="phone" type="tel" autoComplete="tel" placeholder="Téléphone" value={v.phone} onChange={set("phone")} required className={authInputClass} />
         </div>
         <div>
-          <label htmlFor="orias" className="sr-only">Numéro ORIAS</label>
-          <input id="orias" inputMode="numeric" placeholder="Numéro ORIAS (8 chiffres, facultatif)" value={v.orias_number} onChange={set("orias_number")} className={authInputClass} />
-        </div>
-        <div>
           <div className="relative">
             <label htmlFor="password" className="sr-only">Mot de passe</label>
             <input
@@ -94,26 +85,6 @@ export default function SignupForm() {
           <p className="mt-1.5 text-[13px] text-slate-500">8 caractères minimum.</p>
         </div>
       </div>
-
-      <fieldset className="mt-6">
-        <legend className="mb-2.5 text-[14px] font-semibold text-ink">Marchés qui vous intéressent</legend>
-        <div className="grid grid-cols-2 gap-2">
-          {LEAD_TYPES.map((t) => {
-            const on = types.includes(t.value);
-            return (
-              <button
-                key={t.value}
-                type="button"
-                aria-pressed={on}
-                onClick={() => toggle(t.value)}
-                className={`min-h-11 border px-2 text-[13px] font-bold transition-colors ${on ? "border-brand bg-brand text-white" : "border-brand bg-white text-brand hover:bg-brand/5"}`}
-              >
-                {t.label}
-              </button>
-            );
-          })}
-        </div>
-      </fieldset>
 
       {error && <p role="alert" className="mt-5 text-sm text-red-600">{error}</p>}
 

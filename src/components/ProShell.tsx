@@ -236,7 +236,7 @@ export default function ProShell({ children }: { children: React.ReactNode }) {
         <div className="min-h-screen bg-slate-50">
           <header className="border-b border-slate-200 bg-white">
             <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4 md:px-8">
-              <Image src="/brand/ficheassur-logo.svg" alt="FicheAssur" width={140} height={32} priority unoptimized className="h-7 w-auto" />
+              <Image src="/brand/ficheassur-logo.svg" alt="FicheAssur" width={134} height={40} priority unoptimized className="h-10 w-auto" />
               <span className="flex items-center gap-2 text-[13px] font-semibold text-slate-600">
                 <svg viewBox="0 0 24 24" className="size-4 text-emerald-600" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <rect x="4" y="11" width="16" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" />
