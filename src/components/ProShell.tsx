@@ -253,7 +253,7 @@ export default function ProShell({ children }: { children: React.ReactNode }) {
 
   const isActive = (href: string) => (href === "/espace-pro" ? pathname === href : pathname.startsWith(href));
 
-  // Stripe-style item: a plain row, the current page in the brand colour.
+  // Nav item: the current page on a light-blue background, in the brand colour.
   const link = (item: NavItem) => {
     const active = isActive(item.href);
     return (
@@ -264,7 +264,7 @@ export default function ProShell({ children }: { children: React.ReactNode }) {
         data-tip={rail ? item.label : undefined}
         data-tip-pos="right"
         aria-label={rail ? item.label : undefined}
-        className={`flex h-9 items-center gap-3 rounded-md px-2 text-[14px] transition-colors hover:bg-slate-100 ${rail ? "md:justify-center" : ""} ${active ? "font-semibold text-brand" : "text-ink"}`}
+        className={`flex h-9 items-center gap-3 rounded-md px-2 text-[14px] transition-colors ${rail ? "md:justify-center" : ""} ${active ? "bg-brand/10 font-semibold text-brand" : "text-ink hover:bg-slate-100"}`}
       >
         <Icon name={item.icon} className={`size-[18px] ${active ? "text-brand" : "text-slate-500"}`} />
         <span className={rail ? "md:sr-only" : ""}>{item.label}</span>

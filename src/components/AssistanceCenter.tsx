@@ -5,6 +5,7 @@ import { CONTACT } from "@/lib/contact";
 import { HELP_TOPICS, SUPPORT_TOPICS, type HelpTopic } from "@/lib/help";
 import { api } from "@/lib/pro";
 import Select from "@/components/Select";
+import { Arrow } from "@/components/Arrow";
 
 // The help centre, laid out like Stripe's support site: a search over the
 // help articles, topic cards, the answers, then "still need help?" with a
@@ -94,7 +95,7 @@ export default function AssistanceCenter() {
                       <span>
                         <span className="block text-[16px] font-bold text-ink">{t.title}</span>
                         <span className="mt-1 block text-[14px] leading-snug text-slate-600">{t.description}</span>
-                        <span className="mt-2 block text-[13px] font-semibold text-brand">{t.articles.length} articles ›</span>
+                        <span className="mt-2 flex items-center gap-1 text-[13px] font-semibold text-brand">{t.articles.length} articles <Arrow dir="chevron-right" className="size-3.5" /></span>
                       </span>
                     </button>
                   );

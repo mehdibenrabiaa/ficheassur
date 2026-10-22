@@ -5,12 +5,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AuthSubmit, PasswordToggleIcon, authInputClass } from "@/components/AuthLayout";
 import GoogleButton from "@/components/GoogleButton";
+import { useRedirectIfLoggedIn } from "@/components/NavAccount";
 import { login } from "@/lib/pro";
 
 // Same form as New World Courtage's /connexion, signing in to the espace pro
 // (backend POST /api/v1/auth/login).
 export default function LoginForm() {
   const router = useRouter();
+  useRedirectIfLoggedIn(); // already logged in: straight to the espace pro
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);

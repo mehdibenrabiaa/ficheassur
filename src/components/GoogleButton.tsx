@@ -3,11 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { getGoogleAccessToken } from "@/lib/google";
-import { googleSignIn } from "@/lib/pro";
+import { MICROSOFT_CLIENT_ID, getMicrosoftIdToken } from "@/lib/microsoft";
+import { googleSignIn, microsoftSignIn } from "@/lib/pro";
 
 // Same "ou / Continuer avec Google" block as New World Courtage's
-// SocialAuthButtons (and its Google icon). Signs in -- or creates the account
-// on first use -- then opens the espace pro. `beforeStart` lets a form block
+// SocialAuthButtons (and its Google icon), plus "Continuer avec Microsoft"
+// once NEXT_PUBLIC_MICROSOFT_CLIENT_ID is set. Signs in -- or creates the
+// account on first use -- then opens the espace pro. `beforeStart` lets a form block
 // it with a message (e.g. sign-up: the terms must be accepted first).
 export function GoogleIcon({ className }: { className?: string }) {
   return (
@@ -20,47 +22,68 @@ export function GoogleIcon({ className }: { className?: string }) {
   );
 }
 
+function MicrosoftIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 21 21" className={className} aria-hidden="true">
+      <path fill="#f25022" d="M1 1h9v9H1z" />
+      <path fill="#7fba00" d="M11 1h9v9h-9z" />
+      <path fill="#00a4ef" d="M1 11h9v9H1z" />
+      <path fill="#ffb900" d="M11 11h9v9h-9z" />
+    </svg>
+  );
+}
+
+const PROVIDERS = {
+  google: { label: "Continuer avec Google", icon: <GoogleIcon className="size-6" />, getToken: getGoogleAccessToken, signIn: googleSignIn },
+  microsoft: { label: "Continuer avec Microsoft", icon: <MicrosoftIcon className="size-5" />, getToken: getMicrosoftIdToken, signIn: microsoftSignIn },
+} as const;
+type Provider = keyof typeof PROVIDERS;
+
 export default function GoogleButton({ beforeStart }: { beforeStart?: () => string | null }) {
   const router = useRouter();
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<Provider | null>(null);
   const [error, setError] = useState("");
+  const providers: Provider[] = MICROSOFT_CLIENT_ID ? ["google", "microsoft"] : ["google"];
 
-  async function start() {
+  async function start(provider: Provider) {
     const blocked = beforeStart?.();
     if (blocked) {
       setError(blocked);
       return;
     }
     setError("");
-    setBusy(true);
+    setBusy(provider);
     try {
-      const token = await getGoogleAccessToken();
+      const token = await PROVIDERS[provider].getToken();
       if (!token) return; // popup closed
-      await googleSignIn(token);
+      await PROVIDERS[provider].signIn(token);
       router.push("/espace-pro");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Une erreur est survenue.");
     } finally {
-      setBusy(false);
+      setBusy(null);
     }
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="relative flex items-center">
+    <div className="flex flex-col gap-3">
+      <div className="relative mb-1 flex items-center">
         <div className="h-px flex-1 bg-slate-200" />
         <span className="px-3 text-xs text-slate-400">ou</span>
         <div className="h-px flex-1 bg-slate-200" />
       </div>
-      <button
-        type="button"
-        onClick={start}
-        disabled={busy}
-        className="inline-flex h-12 items-center justify-center gap-3 border border-slate-300 bg-white text-base font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60"
-      >
-        {busy ? <span className="size-5 animate-spin rounded-full border-2 border-slate-300 border-t-brand" aria-hidden="true" /> : <GoogleIcon className="size-6" />}
-        Continuer avec Google
-      </button>
+      {providers.map((p) => (
+        <button
+          key={p}
+          type="button"
+          onClick={() => start(p)}
+          disabled={busy !== null}
+          className="inline-flex h-12 items-center justify-center gap-3 border border-slate-300 bg-white text-base font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60"
+        >
+          {busy === p ? <span className="size-5 animate-spin rounded-full border-2 border-slate-300 border-t-brand" aria-hidden="true" /> : PROVIDERS[p].icon}
+          {PROVIDERS[p].label}
+        </button>
+      ))}
       {error && <p role="alert" className="text-[13px] text-red-600">{error}</p>}
     </div>
   );

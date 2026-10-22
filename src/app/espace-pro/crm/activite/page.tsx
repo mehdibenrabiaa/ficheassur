@@ -4,6 +4,7 @@ import { useState } from "react";
 import { EmptyState, LeadLine, LoadMore, usePagedList } from "@/components/pro/portfolio";
 import { card, ErrorNote, ListSkeleton, PageHeader } from "@/components/pro/ui";
 import { listActivity, type ActivityItem } from "@/lib/pro";
+import { WithArrows } from "@/components/Arrow";
 
 // The portfolio's history, newest first and grouped by day: purchases,
 // status changes, reminders and notes on every lead. Loaded 50 at a time as
@@ -76,7 +77,7 @@ export default function Activite() {
                       </span>
                       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                         <LeadLine lead={i.lead} showStatus={false} />
-                        <p className="text-[14px] text-slate-600">{i.detail}</p>
+                        <p className="text-[14px] text-slate-600"><WithArrows text={i.detail} /></p>
                       </div>
                     </li>
                   );

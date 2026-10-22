@@ -87,6 +87,14 @@ export async function activate(token: string, password: string): Promise<Broker>
   return out.broker;
 }
 
+// "Continuer avec Microsoft": signs in, or creates the account on first use (refused if the email
+// already belongs to an account that wasn't opened with Microsoft).
+export async function microsoftSignIn(idToken: string): Promise<Broker> {
+  const out = await api<{ access_token: string; broker: Broker }>("/api/v1/auth/microsoft", { method: "POST", body: JSON.stringify({ id_token: idToken }) });
+  setToken(out.access_token);
+  return out.broker;
+}
+
 // "Continuer avec Google": signs in, or creates the account on first use.
 export async function googleSignIn(accessToken: string): Promise<Broker> {
   const out = await api<{ access_token: string; broker: Broker }>("/api/v1/auth/google", { method: "POST", body: JSON.stringify({ access_token: accessToken }) });

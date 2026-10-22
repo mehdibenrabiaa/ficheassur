@@ -7,6 +7,7 @@ import { loadStripe, type Stripe } from "@stripe/stripe-js";
 import { ErrorNote, Spinner, card, primaryButton, secondaryButton } from "@/components/pro/ui";
 import { euros } from "@/lib/format";
 import { cancelOrder, confirmOrder, getOrder, type OrderView } from "@/lib/pro";
+import { Arrow } from "@/components/Arrow";
 
 // The payment page, like an e-commerce checkout: the order summary on one
 // side, Stripe's card form (Embedded Checkout, in an iframe: card details
@@ -81,7 +82,7 @@ export default function PaiementPage() {
   return (
     <>
       <div>
-        <Link href="/espace-pro/acheter" className="text-[14px] font-semibold text-brand hover:underline">‹ Retour aux leads</Link>
+        <Link href="/espace-pro/acheter" className="inline-flex items-center gap-1.5 text-[14px] font-semibold text-brand hover:underline"><Arrow dir="left" className="size-4" /> Retour aux leads</Link>
         <h1 className="mt-2 text-[28px] font-bold leading-tight tracking-tight text-ink sm:text-[32px]">Paiement</h1>
       </div>
 
@@ -195,7 +196,7 @@ function Confirmation({ order }: { order: OrderView }) {
           {delivered.map((i) => (
             <li key={i.id} className="flex items-center justify-between gap-4 px-6 py-3 text-[14px]">
               <span className="text-ink">{i.label}</span>
-              <Link href={`/espace-pro/mes-leads/${i.purchase_id}`} className="shrink-0 font-semibold text-brand hover:underline">Voir le lead ›</Link>
+              <Link href={`/espace-pro/mes-leads/${i.purchase_id}`} className="inline-flex shrink-0 items-center gap-1 font-semibold text-brand hover:underline">Voir le lead <Arrow dir="chevron-right" className="size-4" /></Link>
             </li>
           ))}
           {refunded.map((i) => (

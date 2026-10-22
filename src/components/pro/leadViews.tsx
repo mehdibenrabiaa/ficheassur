@@ -103,15 +103,18 @@ export function LeadGrouped({ leads, cart, onChoose, onToggle }: LeadViewProps) 
                           {l.first_name_initial && <span className="text-[13px] text-slate-500">· Prospect {l.first_name_initial}</span>}
                           <span className="text-[13px] text-slate-500">· {ago(l.created_at)}</span>
                         </p>
+                        {/* Qualification as a small table: one line per answer, label | value. */}
                         {facts(l).length > 0 && (
-                          <dl className="flex flex-wrap gap-1.5">
-                            {facts(l).map(([label, value]) => (
-                              <div key={label} className="flex items-baseline gap-1 rounded-md bg-slate-100 px-2.5 py-1 text-[13px]">
-                                <dt className="text-slate-500">{label} :</dt>
-                                <dd className="font-semibold text-ink">{value}</dd>
-                              </div>
-                            ))}
-                          </dl>
+                          <table className="w-full max-w-lg overflow-hidden rounded-md border border-slate-200 text-[13px]">
+                            <tbody>
+                              {facts(l).map(([label, value]) => (
+                                <tr key={label} className="border-b border-slate-100 last:border-0 even:bg-slate-50/70">
+                                  <th scope="row" className="w-1/2 px-3 py-1.5 text-left font-normal text-slate-500">{label}</th>
+                                  <td className="px-3 py-1.5 font-semibold text-ink">{value}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
                         )}
                       </div>
                     </div>

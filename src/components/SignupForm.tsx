@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { AuthSubmit, PasswordToggleIcon, authInputClass } from "@/components/AuthLayout";
 import { LEAD_TYPES } from "@/lib/leadTypes";
 import GoogleButton from "@/components/GoogleButton";
+import { useRedirectIfLoggedIn } from "@/components/NavAccount";
 import { register } from "@/lib/pro";
 
 // Same design as New World Courtage's /inscription. Self-service: the
@@ -13,6 +14,7 @@ import { register } from "@/lib/pro";
 // broker lands in the espace pro straight away -- no review to wait for.
 export default function SignupForm() {
   const router = useRouter();
+  useRedirectIfLoggedIn(); // already logged in: straight to the espace pro
   const [v, setV] = useState({ full_name: "", company: "", email: "", phone: "", orias_number: "", password: "" });
   const [types, setTypes] = useState<string[]>([]);
   const [showPassword, setShowPassword] = useState(false);

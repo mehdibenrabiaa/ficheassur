@@ -8,6 +8,7 @@ import { dateShort, dateTime, euros, marketLabel } from "@/lib/format";
 import { LEAD_TYPES } from "@/lib/leadTypes";
 import RevenuePanel from "@/components/pro/RevenuePanel";
 import { addCrmNote, getCrmLead, updateCrmLead, type CrmLeadDetail, type CrmStatus } from "@/lib/pro";
+import { Arrow, WithArrows } from "@/components/Arrow";
 
 // One lead in the CRM, laid out like a Salesforce record page: a highlights
 // header (name, key fields, call / email), the sales path (Nouveau ->
@@ -130,7 +131,7 @@ export default function LeadDetail() {
 
   return (
     <>
-      <Link href="/espace-pro/mes-leads" className="-mb-4 text-[13px] font-semibold text-accent hover:underline">← Mes leads</Link>
+      <Link href="/espace-pro/mes-leads" className="-mb-4 inline-flex items-center gap-1.5 self-start text-[13px] font-semibold text-accent hover:underline"><Arrow dir="left" className="size-3.5" /> Mes leads</Link>
 
       {/* Highlights panel */}
       <section className={card}>
@@ -342,7 +343,7 @@ export default function LeadDetail() {
                   </div>
                   <div className="min-w-0 flex-1 pb-4">
                     <p className="text-[12px] text-slate-500">{t.kind === "note" ? "Note" : t.kind === "reminder" ? "Rappel" : "Mise à jour"} · {dateTime(t.at)}</p>
-                    <p className={`mt-0.5 text-[14px] text-ink ${t.kind === "note" ? "whitespace-pre-wrap" : ""}`}>{t.text}</p>
+                    <p className={`mt-0.5 text-[14px] text-ink ${t.kind === "note" ? "whitespace-pre-wrap" : ""}`}>{t.kind === "note" ? t.text : <WithArrows text={t.text} />}</p>
                   </div>
                 </li>
               ))}

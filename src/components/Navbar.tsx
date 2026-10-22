@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import NavAccount, { ACCOUNT_LINKS, UserIcon, firstName, useLogout, useSession } from "@/components/NavAccount";
 import { CONTACT } from "@/lib/contact";
+import { Arrow } from "@/components/Arrow";
 
 // Same construction as the New World Courtage navbar: on desktop a bordered
 // logo cell spanning a thin utility row and the main row, which ends in a
@@ -64,6 +66,9 @@ function ShieldIcon() {
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  // Logged-in broker: first name + menu instead of "Espace pro"; "Devenir partenaire" hidden (already one).
+  const [broker, setBroker] = useSession();
+  const logout = useLogout(setBroker);
 
   // Drawer: lock page scroll while open, close on Escape.
   useEffect(() => {
@@ -109,12 +114,12 @@ export default function Navbar() {
                   </Link>
                 ))}
               </nav>
-              <Link href="/#acces" className="flex items-center bg-accent px-7 text-[15px] font-bold text-white transition-colors hover:bg-accent-hover">
-                Devenir partenaire
-              </Link>
-              <Link href="/connexion" className="flex items-center gap-2 bg-brand px-7 text-[15px] font-bold text-white transition-colors hover:bg-brand-hover">
-                <LockIcon /> Espace pro
-              </Link>
+              {!broker && (
+                <Link href="/#acces" className="flex items-center bg-accent px-7 text-[15px] font-bold text-white transition-colors hover:bg-accent-hover">
+                  Devenir partenaire
+                </Link>
+              )}
+              <NavAccount broker={broker} onLogout={logout} />
             </div>
           </div>
         </div>
@@ -125,16 +130,18 @@ export default function Navbar() {
             <Logo className="h-8" />
           </Link>
           <div className="flex-1" />
-          <Link href="/#acces" className="flex items-center bg-accent px-4 text-[14px] font-bold text-white transition-colors hover:bg-accent-hover sm:px-6">
-            Partenaire
-          </Link>
+          {!broker && (
+            <Link href="/#acces" className="flex items-center bg-accent px-4 text-[14px] font-bold text-white transition-colors hover:bg-accent-hover sm:px-6">
+              Partenaire
+            </Link>
+          )}
           <Link
-            href="/connexion"
-            aria-label="Espace pro"
+            href={broker ? "/espace-pro" : "/connexion"}
+            aria-label={broker ? `Espace pro de ${firstName(broker)}` : "Espace pro"}
             className="flex items-center gap-2 bg-brand px-4 text-[14px] font-bold text-white transition-colors hover:bg-brand-hover sm:px-5"
           >
-            <LockIcon className="size-[17px]" />
-            <span className="hidden sm:inline">Espace pro</span>
+            {broker ? <UserIcon /> : <LockIcon className="size-[17px]" />}
+            <span className="hidden sm:inline">{broker ? firstName(broker) : "Espace pro"}</span>
           </Link>
           <button
             type="button"
@@ -183,7 +190,7 @@ export default function Navbar() {
               className="flex items-center justify-between border-b border-slate-200 px-5 py-4 text-[15px] font-medium text-ink hover:bg-slate-50"
             >
               {l.label}
-              <span className="text-brand" aria-hidden="true">›</span>
+              <Arrow dir="chevron-right" className="size-4 text-brand" />
             </Link>
           ))}
           <div className="border-b border-slate-200 bg-light">
@@ -208,20 +215,43 @@ export default function Navbar() {
         </nav>
 
         <div className="grid grid-cols-2">
-          <Link
-            href="/#acces"
-            onClick={() => setOpen(false)}
-            className="flex items-center justify-center bg-accent py-4 text-[15px] font-bold text-white transition-colors hover:bg-accent-hover"
-          >
-            Devenir partenaire
-          </Link>
-          <Link
-            href="/connexion"
-            onClick={() => setOpen(false)}
-            className="flex items-center justify-center gap-2 bg-brand py-4 text-[15px] font-bold text-white transition-colors hover:bg-brand-hover"
-          >
-            <LockIcon /> Espace pro
-          </Link>
+          {broker ? (
+            <>
+              <p className="px-1 pb-1 text-[13px] text-slate-500">Connecté : <strong className="text-ink">{broker.full_name}</strong></p>
+              {ACCOUNT_LINKS.map((l) => (
+                <Link key={l.href} href={l.href} onClick={() => setOpen(false)} className="border-b border-slate-100 px-1 py-3 text-[15px] font-medium text-ink hover:text-brand">
+                  {l.label}
+                </Link>
+              ))}
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  logout();
+                }}
+                className="flex items-center justify-center gap-2 border border-slate-300 py-4 text-[15px] font-bold text-ink hover:border-brand hover:text-brand"
+              >
+                Déconnexion
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/#acces"
+                onClick={() => setOpen(false)}
+                className="flex items-center justify-center bg-accent py-4 text-[15px] font-bold text-white transition-colors hover:bg-accent-hover"
+              >
+                Devenir partenaire
+              </Link>
+              <Link
+                href="/connexion"
+                onClick={() => setOpen(false)}
+                className="flex items-center justify-center gap-2 bg-brand py-4 text-[15px] font-bold text-white transition-colors hover:bg-brand-hover"
+              >
+                <LockIcon /> Espace pro
+              </Link>
+            </>
+          )}
         </div>
       </aside>
     </>
