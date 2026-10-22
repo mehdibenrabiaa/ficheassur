@@ -78,7 +78,7 @@ function SecurityTips() {
           ))}
         </ul>
       </div>
-      <div className="mt-5 flex justify-center gap-2">
+      <div className="mt-4 flex justify-center">
         {SECURITY_TIPS.map(({ title }, index) => (
           <button
             key={title}
@@ -86,8 +86,11 @@ function SecurityTips() {
             onClick={() => setActive(index)}
             aria-label={`Conseil ${index + 1}`}
             aria-current={index === active}
-            className={`h-2.5 rounded-full border border-white transition-all duration-300 ${index === active ? "w-8 bg-white" : "w-2.5 bg-transparent"}`}
-          />
+            className="flex h-8 min-w-8 items-center justify-center px-1"
+          >
+            {/* The visible dot; the button around it is the 32px tap area. */}
+            <span className={`h-3.5 rounded-full border-2 border-white transition-all duration-300 ${index === active ? "w-10 bg-white" : "w-3.5 bg-transparent"}`} />
+          </button>
         ))}
       </div>
     </div>
@@ -99,7 +102,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
     <div className="flex min-h-screen flex-col bg-white">
       <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 px-4 lg:px-6">
         <Link href="/" className="shrink-0">
-          <Image src="/brand/ficheassur-logo.svg" alt="FicheAssur" width={140} height={32} priority unoptimized className="h-8 w-auto" />
+          <Image src="/brand/ficheassur-logo.svg" alt="FicheAssur" width={140} height={32} priority unoptimized className="h-11 w-auto" />
         </Link>
         <nav className="flex items-stretch text-[15px] text-ink">
           <Link href="/assistance" className="flex items-center gap-2 px-3 hover:text-brand lg:px-4">

@@ -208,3 +208,14 @@ body { color: var(--ink); background: #fff; }
 @media (prefers-reduced-motion: reduce) {
   .splash, .splash-shine, .splash-bar { animation: none; }
 }
+
+/* Visitors who asked their system for less motion: no animations, transitions
+   or smooth scrolling anywhere (spinners still show, just still). */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

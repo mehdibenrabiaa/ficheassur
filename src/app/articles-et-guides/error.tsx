@@ -1,0 +1,2 @@
+'use client';
+export default function ErrorPage({reset}: {reset: () => void}) {return <section className="mx-auto max-w-2xl p-10 text-center"><h1 className="heading text-[30px]">Ressources temporairement indisponibles</h1><p className="mt-4 text-slate-600">Nous ne pouvons pas charger les articles pour le moment.</p><button onClick={reset} className="mt-6 bg-brand px-6 py-3 text-white">Réessayer</button></section>;}

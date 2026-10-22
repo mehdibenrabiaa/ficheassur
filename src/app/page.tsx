@@ -1,5 +1,8 @@
+import { Suspense } from "react";
+import LatestEditorial from "@/components/EditorialCards";
 import Navbar from "@/components/Navbar";
 import { SiteFooter } from "@/components/SiteChrome";
+import FAQAccordion from "@/components/FAQAccordion";
 import AccessRequestForm from "@/components/AccessRequestForm";
 import { LEAD_TYPES } from "@/lib/leadTypes";
 
@@ -122,11 +125,11 @@ export default function Home() {
 
           <div className="relative bg-brand lg:flex lg:min-h-[min(640px,calc(100svh-87px))] lg:items-center lg:bg-transparent">
             <div className="w-full px-5 pb-12 pt-4 sm:px-8 lg:px-12 lg:py-16 2xl:px-24">
-              <div className="text-white lg:w-4/5 lg:max-w-3xl">
-                <h1 className="heading mt-4 text-[40px] leading-[1.05] sm:text-[54px] lg:text-[62px]">
+              <div className="text-white lg:w-4/5">
+                <h1 className="heading mt-4 text-[48px] leading-[1] sm:text-[58px] md:text-[64px] lg:text-[72px] xl:text-[78px] 2xl:text-[94px]">
                   Des leads assurance <em className="whitespace-nowrap">prêts à signer.</em>
                 </h1>
-                <p className="mt-5 max-w-lg text-[17px] leading-relaxed text-white/85">
+                <p className="mt-4 max-w-xl text-[16px] leading-relaxed text-white/85 lg:mt-5 lg:text-[17px]">
                   Des prospects qui viennent de demander un devis, qualifiés et consentants. Vous n&apos;avez plus qu&apos;à les rappeler.
                 </p>
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -284,7 +287,7 @@ export default function Home() {
         <section id="faq" className="scroll-mt-16 lg:scroll-mt-[87px] w-full py-4">
           <div className="px-5 lg:px-12 2xl:px-24">
           <div className="bg-light px-4 py-10 sm:px-8 lg:px-14 lg:py-14">
-          <div className="mx-auto max-w-3xl">
+          <div className="mx-auto max-w-2xl">
             <div className="text-center">
               <Eyebrow>FAQ</Eyebrow>
               <h2 className="heading mt-3 text-[30px] leading-[1.1] sm:text-[38px]">Questions fréquentes</h2>
@@ -292,22 +295,13 @@ export default function Home() {
                 Tout ce qu&apos;il faut savoir avant de devenir partenaire : origine des leads, tarifs, exclusivité et fonctionnement.
               </p>
             </div>
-            <div className="mt-8 divide-y divide-slate-200 border-y border-slate-200 bg-white">
-              {FAQ.map((f) => (
-                <details key={f.q} className="group px-6">
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-5 text-[16px] font-semibold">
-                    {f.q}
-                    <span className="text-[22px] font-normal text-brand transition-transform group-open:rotate-45" aria-hidden="true">+</span>
-                  </summary>
-                  <p className="pb-5 text-[15px] leading-relaxed text-slate-600">{f.a}</p>
-                </details>
-              ))}
-            </div>
+            <FAQAccordion items={FAQ} />
           </div>
           </div>
           </div>
         </section>
 
+        <Suspense fallback={null}><LatestEditorial /></Suspense>
       </main>
       <SiteFooter />
     </>

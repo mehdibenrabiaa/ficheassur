@@ -10,6 +10,7 @@ import CurrentYear from "@/components/CurrentYear";
 // (mentions légales, confidentialité, CGV) here once they're written.
 
 const SITE_LINKS = [
+  { label: "Articles & guides", href: "/articles-et-guides" },
   { label: "Qualité des leads", href: "/#qualite" },
   { label: "Fonctionnement", href: "/#fonctionnement" },
   { label: "Questions fréquentes", href: "/#faq" },

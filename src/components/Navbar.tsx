@@ -18,7 +18,7 @@ const MAIN_LINKS = [
   { href: "/#leads", label: "Nos leads" },
   { href: "/#qualite", label: "Qualité" },
   { href: "/#fonctionnement", label: "Fonctionnement" },
-  { href: "/#faq", label: "FAQ" },
+  { href: "/articles-et-guides", label: "Articles & guides" },
 ];
 
 // Right side of the utility row, as on NWC: accessibility, contact, phone.

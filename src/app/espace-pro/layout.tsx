@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import ProShell from "@/components/ProShell";
+import { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: "Espace pro — FicheAssur",
@@ -13,5 +14,5 @@ export const metadata: Metadata = {
 export const instant = false;
 
 export default function EspaceProLayout({ children }: { children: React.ReactNode }) {
-  return <ProShell>{children}</ProShell>;
+  return <Suspense fallback={<p role="status">Chargement...</p>}><ProShell>{children}</ProShell></Suspense>;
 }
