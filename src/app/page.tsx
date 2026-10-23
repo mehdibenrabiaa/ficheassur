@@ -286,7 +286,7 @@ export default function Home() {
         </section>
         <section id="faq" className="scroll-mt-16 lg:scroll-mt-[87px] w-full py-4">
           <div className="px-5 lg:px-12 2xl:px-24">
-          <div className="bg-light px-4 py-10 sm:px-8 lg:px-14 lg:py-14">
+          <div className="bg-white px-4 py-10 sm:px-8 lg:px-14 lg:py-14">
           <div className="mx-auto max-w-2xl">
             <div className="text-center">
               <Eyebrow>FAQ</Eyebrow>

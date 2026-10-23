@@ -104,18 +104,18 @@ function AccountSwitcher({ broker, onLogout, compact }: { broker: Broker; onLogo
         aria-expanded={open}
         aria-haspopup="menu"
         aria-label={compact ? `${title} — ${broker.full_name}` : undefined}
-        className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left transition-colors hover:bg-slate-100"
+        className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left transition-colors hover:bg-white/10"
       >
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-brand text-[13px] font-bold text-white" aria-hidden="true">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-white/15 text-[13px] font-bold text-white" aria-hidden="true">
           {initials(title)}
         </span>
         {!compact && (
           <>
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-[14px] font-semibold text-ink">{title}</span>
-              <span className="block truncate text-[12px] text-slate-500">{broker.full_name}</span>
+              <span className="block truncate text-[14px] font-semibold text-white">{title}</span>
+              <span className="block truncate text-[12px] text-white/70">{broker.full_name}</span>
             </span>
-            <Icon name="chevron" className="size-4 text-slate-500" />
+            <Icon name="chevron" className="size-4 text-white/70" />
           </>
         )}
       </button>
@@ -253,7 +253,7 @@ export default function ProShell({ children }: { children: React.ReactNode }) {
 
   const isActive = (href: string) => (href === "/espace-pro" ? pathname === href : pathname.startsWith(href));
 
-  // Nav item: the current page on a light-blue background, in the brand colour.
+  // Nav item: the current page on a lighter tint of the brand-blue sidebar, in white.
   const link = (item: NavItem) => {
     const active = isActive(item.href);
     return (
@@ -264,17 +264,17 @@ export default function ProShell({ children }: { children: React.ReactNode }) {
         data-tip={rail ? item.label : undefined}
         data-tip-pos="right"
         aria-label={rail ? item.label : undefined}
-        className={`flex h-9 items-center gap-3 rounded-md px-2 text-[14px] transition-colors ${rail ? "md:justify-center" : ""} ${active ? "bg-brand/10 font-semibold text-brand" : "text-ink hover:bg-slate-100"}`}
+        className={`flex h-9 items-center gap-3 rounded-md px-2 text-[14px] transition-colors ${rail ? "md:justify-center" : ""} ${active ? "bg-white/15 font-semibold text-white" : "text-white/85 hover:bg-white/10 hover:text-white"}`}
       >
-        <Icon name={item.icon} className={`size-[18px] ${active ? "text-brand" : "text-slate-500"}`} />
+        <Icon name={item.icon} className={`size-[18px] ${active ? "text-white" : "text-white/70"}`} />
         <span className={rail ? "md:sr-only" : ""}>{item.label}</span>
       </Link>
     );
   };
   const group = (title: string, items: NavItem[]) => (
     <div className="mt-6">
-      {rail ? <hr className="mx-2 mb-2 hidden border-slate-200 md:block" /> : null}
-      <p className={`mb-1 px-2 text-[12px] font-medium text-slate-500 ${rail ? "md:sr-only" : ""}`}>{title}</p>
+      {rail ? <hr className="mx-2 mb-2 hidden border-white/15 md:block" /> : null}
+      <p className={`mb-1 px-2 text-[12px] font-medium text-white/60 ${rail ? "md:sr-only" : ""}`}>{title}</p>
       {items.map(link)}
     </div>
   );
@@ -291,7 +291,7 @@ export default function ProShell({ children }: { children: React.ReactNode }) {
       {/* --sidebar-w: the sidebar's desktop width, for fixed bars that sit beside it (the cart's pay bar). */}
       <div className="min-h-screen bg-white md:flex" style={{ "--sidebar-w": rail ? "68px" : "256px" } as React.CSSProperties}>
         <aside
-          className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-slate-200 bg-white pt-3 shadow-xl transition-[transform,width] duration-300 md:sticky md:top-0 md:h-screen md:translate-x-0 md:shadow-none ${rail ? "md:w-[68px]" : "md:w-64"} ${drawer ? "translate-x-0" : "-translate-x-full"}`}
+          className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-brand bg-brand pt-3 shadow-xl transition-[transform,width] duration-300 md:sticky md:top-0 md:h-screen md:translate-x-0 md:shadow-none ${rail ? "md:w-[68px]" : "md:w-64"} ${drawer ? "translate-x-0" : "-translate-x-full"}`}
         >
           <AccountSwitcher broker={broker} onLogout={logout} compact={rail} />
           {/* Any click on a link closes the phone drawer. Visible overflow when collapsed, so tooltips aren't clipped. */}
@@ -306,9 +306,9 @@ export default function ProShell({ children }: { children: React.ReactNode }) {
             aria-label={rail ? "Assistance" : undefined}
             data-tip={rail ? "Assistance" : undefined}
             data-tip-pos="right"
-            className={`flex h-12 items-center gap-3 border-t border-slate-200 bg-slate-50 px-5 text-[14px] text-ink hover:bg-slate-100 ${rail ? "md:justify-center md:px-0" : ""}`}
+            className={`flex h-12 items-center gap-3 border-t border-white/15 bg-brand-hover px-5 text-[14px] text-white hover:bg-white/10 ${rail ? "md:justify-center md:px-0" : ""}`}
           >
-            <Icon name="help" className="size-[18px] text-slate-500" /> <span className={rail ? "md:sr-only" : ""}>Assistance</span>
+            <Icon name="help" className="size-[18px] text-white/70" /> <span className={rail ? "md:sr-only" : ""}>Assistance</span>
           </Link>
           {/* The edge "rail": a thin hit area along the sidebar's border that toggles it (shadcn's SidebarRail). */}
           <button
