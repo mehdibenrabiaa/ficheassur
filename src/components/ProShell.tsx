@@ -196,7 +196,7 @@ export default function ProShell({ children }: { children: React.ReactNode }) {
   // Ctrl/Cmd+B toggles it, like shadcn's sidebar (and VS Code).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() === "b" && (e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey) {
+      if ((e.key === "b" || e.key === "B") && (e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey) {
         e.preventDefault();
         toggleSidebar();
       }
